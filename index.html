@@ -9,7 +9,7 @@
 
   <style>
     /* =========================================
-       🎨 THEME SETTINGS (EDIT THESE!)
+       🎨 THEME SETTINGS (Terra Cotta)
        ========================================= */
     :root {
       --bg-color: #ffffff;           
@@ -23,7 +23,7 @@
     }
 
     /* =========================================
-       📐 DESIGN RULES (DO NOT TOUCH)
+       📐 DESIGN RULES (Full-Screen Layout)
        ========================================= */
     body {
       margin: 0;
@@ -33,9 +33,12 @@
       line-height: 1.6;
     }
     
-    .container { max-width: 900px; margin: auto; }
-    .section { padding: 60px 20px; }
-    .bg-alt { background-color: var(--section-bg); }
+    /* The container is now wider (1200px) and sits inside sections */
+    .container { max-width: 1200px; margin: auto; padding: 0 20px; }
+    
+    /* Sections stretch 100% across the screen */
+    .section { padding: 80px 0; width: 100%; }
+    .bg-alt { background-color: var(--section-bg); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
     .text-center { text-align: center; }
     
     h1, h2, h3 { margin-top: 0; }
@@ -72,113 +75,129 @@
 </head>
 <body>
 
-<div class="container">
-
-  <div class="section" style="display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px;">
-    
-    <img src="IMG_20240903_195451~2.jpg" alt="Seshadri Naik" style="width: 220px; height: 220px; border-radius: 50%; object-fit: cover; box-shadow: var(--card-shadow);">
-    
-    <div style="max-width: 500px;">
-      <h1 style="margin-top: 0; margin-bottom: 5px;">Seshadri Naik</h1>
-      <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--text-muted);">PhD Researcher in Connected & Automated Vehicles</h3>
-      <p style="margin-bottom: 25px;">
-        I study modelling, management, and emergent behavior in mixed traffic systems—bridging theory, simulation, and real-world mobility challenges. Based in Barcelona.
-      </p>
+  <div class="section">
+    <div class="container" style="display: flex; align-items: center; justify-content: center; gap: 50px; flex-wrap: wrap;">
       
-      <div style="margin-left: -10px;">
-        <a href="https://scholar.google.com/citations?hl=en&user=p2ouKjIAAAAJ" target="_blank" class="btn btn-outline">View Research</a>
-        <a href="CV_Seshadri Naik Moode.pdf" target="_blank" class="btn btn-primary">Download CV</a>
+      <img src="IMG_20240903_195451~2.jpg" alt="Seshadri Naik" style="width: 240px; height: 240px; border-radius: 50%; object-fit: cover; box-shadow: var(--card-shadow);">
+      
+      <div style="max-width: 600px;">
+        <h1 style="margin-top: 0; margin-bottom: 5px;">Seshadri Naik</h1>
+        <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--text-muted);">PhD Researcher in Connected & Automated Vehicles</h3>
+        <p style="margin-bottom: 25px; font-size: 18px;">
+          I study modelling, management, and emergent behavior in mixed traffic systems—bridging theory, simulation, and real-world mobility challenges. Based in Barcelona.
+        </p>
+        
+        <div style="margin-left: -10px;">
+          <a href="https://scholar.google.com/citations?hl=en&user=p2ouKjIAAAAJ" target="_blank" class="btn btn-outline">View Research</a>
+          <a href="CV_Seshadri Naik Moode.pdf" target="_blank" class="btn btn-primary">Download CV</a>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <div class="section bg-alt">
+    <div class="container">
+      <h2 class="text-center">Featured Research</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Mixed Traffic Modelling</h3>
+          <p>Hierarchical control framework for optimizing lane usage in non-cooperative mixed traffic.</p>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: auto;">Optimal Control • Mixed Traffic • Simulation</p>
+        </div>
+        <div class="card">
+          <h3>Platooning & Emissions</h3>
+          <p>Microscopic simulation integrated with emissions modeling (Aimsun + PHEMlight).</p>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: auto;">Emission • Modeling</p>
+        </div>
+        <div class="card">
+          <h3>Traffic Management</h3>
+          <p>Freeway Lane Management Strategies with Platoons of CAVs.</p>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: auto;">Platooning • Capacity • Freeways</p>
+        </div>
       </div>
     </div>
-    
+  </div>
+
+  <div class="section text-center">
+    <div class="container">
+      <h2>Research Interests</h2>
+      <p style="font-size: 18px;">CAVs • Traffic Flow • Microscopic Modelling • Transport Operations • Simulation</p>
+    </div>
+  </div>
+
+  <div class="section bg-alt">
+    <div class="container">
+      <div style="display: flex; flex-wrap: wrap; gap: 40px;">
+        
+        <div style="flex: 1; min-width: 300px;">
+          <h2>Publications</h2>
+          <p><strong>Under Review</strong></p>
+          <ul>
+            <li style="margin-bottom: 10px;">Hierarchical Optimal Control for Lane Management of CAVs in Non-Cooperative Mixed Traffic</li>
+          </ul>
+        </div>
+
+        <div style="flex: 1; min-width: 300px;">
+          <h2>About</h2>
+          <p>I am a PhD researcher working at the intersection of control systems, artificial intelligence, and transportation engineering.</p>
+          <p>My work focuses on how automated and human-driven vehicles interact, combining theory with simulation to understand system-level behavior.</p>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <div class="section">
-    <h2 class="text-center">Featured Research</h2>
-    <div class="grid">
-      <div class="card">
-        <h3>Mixed Traffic Modelling</h3>
-        <p>Hierarchical control framework for optimizing lane usage in non-cooperative mixed traffic.</p>
-        <p style="color: var(--text-muted); font-size: 14px; margin-top: auto;">Optimal Control • Mixed Traffic • Simulation</p>
-      </div>
-      <div class="card">
-        <h3>Platooning & Emissions</h3>
-        <p>Microscopic simulation integrated with emissions modeling (Aimsun + PHEMlight).</p>
-        <p style="color: var(--text-muted); font-size: 14px; margin-top: auto;">Emission • Modeling</p>
-      </div>
-      <div class="card">
-        <h3>Traffic Management</h3>
-        <p>Freeway Lane Management Strategies with Platoons of CAVs.</p>
-        <p style="color: var(--text-muted); font-size: 14px; margin-top: auto;">Platooning • Capacity • Freeways</p>
+    <div class="container">
+      <h2 class="text-center">Life in Motion</h2>
+      <div class="grid">
+
+        <div class="card">
+          <h3>🏃🏽 Running</h3>
+          <div class="mini-gallery">
+            <div style="flex: 1;">
+              <img src="IMG_20260215_122336_Bokeh.jpg" alt="Half Marathon in Barcelona">
+              <p style="font-size: 13px; font-weight: bold; text-align: center; margin: 0; color: var(--accent-color);">Half: 1h 40m</p>
+            </div>
+            <div style="flex: 1;">
+              <img src="VID_20260315_130453_exported_31983.jpg" alt="Full Marathon at Arc de Triomf">
+              <p style="font-size: 13px; font-weight: bold; text-align: center; margin: 0; color: var(--accent-color);">Full: 3h 52m</p>
+            </div>
+          </div>
+          <p>Long runs bring clarity—ideas simplify and structure emerges.</p>
+          <a href="running.html">Read my running journal &rarr;</a>
+        </div>
+
+        <div class="card">
+          <h3>⛰️ Hiking</h3>
+          <img src="IMG_20250719_161023.jpg" alt="Seshadri Naik at Monte Perdido summit (3355m)" style="margin-bottom: 15px;">
+          <p>Exploring trails, seeking elevation, and finding perspective in nature.</p>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
+            <a href="https://instagram.com/" target="_blank">See trail photos &rarr;</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>✈️ Travelling</h3>
+          <p>Experiencing new cultures, navigating new cities, and expanding my worldview.</p>
+          <div style="margin-top: auto;">
+            <a href="#" target="_blank">Travel gallery &rarr;</a>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
   <div class="section bg-alt text-center">
-    <h2>Research Interests</h2>
-    <p>CAVs • Traffic Flow • Microscopic Modelling • Transport Operations • Simulation</p>
-  </div>
-
-  <div class="section">
-    <h2>Publications</h2>
-    <p><strong>Under Review</strong></p>
-    <ul>
-      <li>Hierarchical Optimal Control for Lane Management of CAVs in Non-Cooperative Mixed Traffic</li>
-    </ul>
-
-    <h2 style="margin-top: 40px;">About</h2>
-    <p>I am a PhD researcher working at the intersection of control systems, artificial intelligence, and transportation engineering.</p>
-    <p>My work focuses on how automated and human-driven vehicles interact, combining theory with simulation to understand system-level behavior.</p>
-  </div>
-
-  <div class="section bg-alt">
-    <h2 class="text-center">Life in Motion</h2>
-    <div class="grid">
-
-      <div class="card">
-        <h3>🏃🏽 Running</h3>
-        <div class="mini-gallery">
-          <div style="flex: 1;">
-            <img src="IMG_20260215_122336_Bokeh.jpg" alt="Half Marathon in Barcelona">
-            <p style="font-size: 13px; font-weight: bold; text-align: center; margin: 0; color: var(--accent-color);">Half: 1h 40m</p>
-          </div>
-          <div style="flex: 1;">
-            <img src="VID_20260315_130453_exported_31983.jpg" alt="Full Marathon at Arc de Triomf">
-            <p style="font-size: 13px; font-weight: bold; text-align: center; margin: 0; color: var(--accent-color);">Full: 3h 52m</p>
-          </div>
-        </div>
-        <p>Long runs bring clarity—ideas simplify and structure emerges.</p>
-        <a href="running.html">Read my running journal &rarr;</a>
-      </div>
-
-      <div class="card">
-        <h3>⛰️ Hiking</h3>
-        <img src="IMG_20250719_161023.jpg" alt="Seshadri Naik at Monte Perdido summit (3355m)" style="margin-bottom: 15px;">
-        <p>Exploring trails, seeking elevation, and finding perspective in nature.</p>
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
-          <a href="https://instagram.com/" target="_blank">See trail photos &rarr;</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>✈️ Travelling</h3>
-        <p>Experiencing new cultures, navigating new cities, and expanding my worldview.</p>
-        <div style="margin-top: auto;">
-          <a href="#" target="_blank">Travel gallery &rarr;</a>
-        </div>
-      </div>
-
+    <div class="container">
+      <h2>Contact</h2>
+      <p>Open to collaborations and research discussions.</p>
+      <p>Email: your@email.com</p>
+      <a href="mailto:your@email.com" class="btn btn-outline" style="margin-top: 10px;">Send Email</a>
     </div>
   </div>
-
-  <div class="section text-center">
-    <h2>Contact</h2>
-    <p>Open to collaborations and research discussions.</p>
-    <p>Email: your@email.com</p>
-    <a href="mailto:your@email.com" class="btn btn-outline" style="margin-top: 10px;">Send Email</a>
-  </div>
-
-</div>
 
 </body>
 </html>
