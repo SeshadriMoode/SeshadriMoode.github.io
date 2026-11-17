@@ -1,0 +1,2512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PACC Platoon Dynamics — Journal Visualizer</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --border: #d0d7de;
+      --text: #1a1a1a;
+      --muted: #57606a;
+      --accent: #0969da;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; }
+    header p { font-size: 0.78rem; color: var(--muted); max-width: 640px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      min-height: calc(100vh - 58px);
+    }
+    aside {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 0.85rem;
+      overflow-y: auto;
+    }
+    main { padding: 0.85rem; overflow-y: auto; }
+    .section { margin-bottom: 1rem; }
+    .section.hidden { display: none !important; }
+    .section h2 {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    label {
+      display: block;
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      padding: 0.35rem;
+      font-size: 0.82rem;
+      background: #fff;
+    }
+    .field { margin-bottom: 0.55rem; }
+    .val { float: right; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .btn-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    button {
+      flex: 1;
+      min-width: 72px;
+      padding: 0.45rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff;
+    }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { filter: brightness(1.05); }
+    button:hover { background: #f6f8fa; }
+    .btn-primary:hover { background: var(--accent); }
+    .status {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      padding: 0.4rem;
+      background: #f6f8fa;
+      border-radius: 4px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .status strong { color: var(--text); }
+    .road-wrap {
+      background: #e8ecf0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      position: relative;
+      height: 260px;
+      margin-bottom: 0.85rem;
+    }
+    #roadCanvas { display: block; width: 100%; height: 100%; }
+    .hud {
+      position: absolute;
+      top: 8px; left: 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      pointer-events: none;
+      font-family: 'Segoe UI', sans-serif;
+      background: rgba(255,255,255,0.85);
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+    .panel-block {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .panel-block h2 {
+      font-size: 0.95rem;
+      margin-bottom: 0.15rem;
+      font-weight: 700;
+    }
+    .panel-block .sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 0.65rem;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .journal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    @media (max-width: 1100px) { .journal-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+    .plot-card {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .plot-card .plot-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.45rem 0.65rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      font-family: 'Segoe UI', sans-serif;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .plot-card .plot-area { height: 420px; min-height: 420px; }
+    .export-row {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+    }
+    .export-row button { flex: 0 1 auto; }
+    .live-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (max-width: 900px) { .live-strip { grid-template-columns: repeat(2, 1fr); } }
+    .live-strip canvas {
+      width: 100%;
+      height: 90px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: block;
+    }
+    .live-strip label {
+      font-size: 0.68rem;
+      text-align: center;
+      margin-top: 2px;
+    }
+    .safety-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      font-family: 'Segoe UI', sans-serif;
+      margin-bottom: 0.85rem;
+    }
+    .safety-table th, .safety-table td {
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.55rem;
+      text-align: center;
+    }
+    .safety-table th { background: #f6f8fa; font-weight: 600; }
+    .safety-table .hit { color: #cf222e; font-weight: 600; }
+    .safety-table .safe { color: #1a7f37; }
+    .safety-table .warn { color: #9a6700; font-weight: 600; }
+    .string-stab-plot { height: 280px; min-height: 280px; margin-top: 0.5rem; }
+    .emer-detail-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 0.65rem;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.78rem;
+    }
+    .emer-detail-row select { flex: 1; min-width: 140px; padding: 0.35rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>PACC Platoon Dynamics — Journal-Ready Visualizer</h1>
+      <p>One active scenario at a time. Choose <strong>PACC</strong>, <strong>CACC</strong>, or <strong>RV (HDM-IDM)</strong> for follower dynamics. Run replaces all plots and discards the previous dataset.</p>
+    </div>
+    <p style="font-size:0.82rem;"><a href="https://seshadrimoode.github.io/" style="color:#0969da;">← Seshadri Naik Moode</a></p>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div class="section">
+        <h2>Scenario</h2>
+        <div class="field">
+          <label>Vehicles <span class="val" id="v-nVeh">10</span></label>
+          <input type="range" id="nVeh" min="3" max="15" value="10" />
+        </div>
+        <div class="field">
+          <label>Δt [s] <span class="val" id="v-dt">0.1</span></label>
+          <input type="range" id="dt" min="0.05" max="0.2" step="0.05" value="0.1" />
+        </div>
+        <div class="field">
+          <label>Playback <span class="val" id="v-speed">1×</span></label>
+          <input type="range" id="playSpeed" min="0.25" max="4" step="0.25" value="1" />
+        </div>
+        <div class="field">
+          <label>Follower controller</label>
+          <select id="controller">
+            <option value="pacc">PACC — Eq. 2.16 (thesis comfort/stability)</option>
+            <option value="cacc">CACC — Table 2.3 (van der Werf)</option>
+            <option value="rv">RV — HDM-IDM (Eq. 2.24–2.25, γ gaps, T′)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Preset</label>
+          <select id="preset">
+            <option value="thesis_cacc">Thesis Fig. 2.6 — CACC stability (pos jerk, a_max=1)</option>
+            <option value="pos_jerk">Positive jerk (+) — May_MainScript loop 1</option>
+            <option value="neg_jerk">Negative jerk (−) — May_MainScript loop 2</option>
+            <option value="wave">Jerk wave (+/−/+)</option>
+            <option value="cruise">Constant speed</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" id="btnRun">▶ Run Scenario</button>
+        </div>
+        <div class="btn-row">
+          <button id="btnPlay">Play</button>
+          <button id="btnPause">Pause</button>
+          <button id="btnReset">Reset</button>
+        </div>
+        <div class="status" id="status">No scenario loaded. Adjust parameters and click <strong>Run Scenario</strong>.</div>
+        <div class="field">
+          <label>Vehicle length [m] <span class="val" id="v-vehLen">5</span></label>
+          <input type="range" id="vehLen" min="4" max="8" step="0.5" value="5" />
+        </div>
+      </div>
+
+      <div class="section hidden" id="rvParamsSection">
+        <h2>RV Parameters (Table 2.3)</h2>
+        <p style="font-size:0.68rem;color:var(--muted);font-family:'Segoe UI',sans-serif;margin-bottom:0.5rem">Thesis Table 2.3 / Eq. 2.23–2.25: HDM-IDM with γ-scaled steady gaps, T′=1 s reaction cascade (F<sub>v</sub> brakes at incident + v·T′), |a<sub>min,e,R</sub>|=7.2 m/s².</p>
+        <div class="field"><label>T [s] (IDM time gap) <span class="val" id="v-rvT">1</span></label><input type="range" id="rvT" min="0.5" max="2" step="0.05" value="1" /></div>
+        <div class="field"><label>T′ [s] (reaction chain) <span class="val" id="v-rvReaction">1</span></label><input type="range" id="rvReaction" min="0.5" max="2" step="0.05" value="1" /></div>
+        <div class="field"><label>g<sub>min,RV</sub> [m] <span class="val" id="v-rvGMin">1.7</span></label><input type="range" id="rvGMin" min="0.5" max="4" step="0.1" value="1.7" /></div>
+        <div class="field"><label>β (FD shape) <span class="val" id="v-rvBeta">4</span></label><input type="range" id="rvBeta" min="2" max="8" step="1" value="4" /></div>
+        <div class="field"><label>v<sub>max,RV</sub> [m/s] <span class="val" id="v-rvVMax">30</span></label><input type="range" id="rvVMax" min="15" max="40" step="0.5" value="30" /></div>
+        <div class="field"><label>a<sub>max,IDM</sub> [m/s²] <span class="val" id="v-rvAMax">1.5</span></label><input type="range" id="rvAMax" min="0.5" max="3" step="0.1" value="1.5" /></div>
+        <div class="field"><label>|a<sub>min,e,RV</sub>| [m/s²] <span class="val" id="v-rvAMinE">7.2</span></label><input type="range" id="rvAMinE" min="4" max="10" step="0.1" value="7.2" /></div>
+        <div class="field"><label>|j<sub>min,e,RV</sub>| [m/s³] <span class="val" id="v-rvJMinE">11.3</span></label><input type="range" id="rvJMinE" min="5" max="20" step="0.1" value="11.3" /></div>
+      </div>
+
+      <div class="section" id="cavParamsSection">
+        <h2>CAV Parameters (PACC / CACC)</h2>
+        <div class="field"><label>δ [s] <span class="val" id="v-delta">0.1</span></label><input type="range" id="delta" min="0" max="0.5" step="0.05" value="0.1" /></div>
+        <div class="field"><label>α <span class="val" id="v-alpha">0.2</span></label><input type="range" id="alpha" min="0" max="0.5" step="0.05" value="0.2" /></div>
+        <div class="field"><label>CAV maxBrake a<sub>min,e</sub> [m/s²] <span class="val" id="v-maxBrake">9.8</span></label><input type="range" id="maxBrake" min="5" max="12" step="0.1" value="9.8" /></div>
+        <div class="field"><label>Jerk |j| [m/s³] <span class="val" id="v-jerk">0.9</span></label><input type="range" id="jerkAmp" min="0.1" max="2" step="0.1" value="0.9" /></div>
+        <div class="field"><label>v<sub>min</sub> [m/s] <span class="val" id="v-initSpd">1</span></label><input type="range" id="initSpd" min="0.5" max="5" step="0.5" value="1" /></div>
+        <p style="font-size:0.68rem;color:var(--muted);font-family:'Segoe UI',sans-serif;margin-top:0.25rem">Leader jerk profile (thesis Fig. 2.6). Hidden when RV is selected.</p>
+      </div>
+
+      <div class="section" id="paccParamsSection">
+        <h2>PACC Parameters</h2>
+        <div class="field"><label>g<sub>min</sub> [m] <span class="val" id="v-minGap">0.5</span></label><input type="range" id="minGap" min="0.5" max="3" step="0.1" value="0.5" /></div>
+      </div>
+
+      <div class="section hidden" id="caccParamsSection">
+        <h2>CACC Parameters</h2>
+        <p style="font-size:0.68rem;color:var(--muted);font-family:'Segoe UI',sans-serif;margin-bottom:0.5rem">a<sub>i</sub> = a<sub>i−1,t−δ</sub> + k<sub>v</sub>(v<sub>i−1</sub>−v<sub>i</sub>) + k<sub>d</sub>(g<sub>i</sub>−g*). Speed term uses <strong>current</strong> v<sub>i−1</sub> (thesis Fig. 2.6).</p>
+        <div class="field"><label>k<sub>v</sub> <span class="val" id="v-caccKv">0.58</span></label><input type="range" id="caccKv" min="0.1" max="1.2" step="0.02" value="0.58" /></div>
+        <div class="field"><label>k<sub>d</sub> <span class="val" id="v-caccKd">0.1</span></label><input type="range" id="caccKd" min="0.02" max="0.5" step="0.02" value="0.1" /></div>
+        <div class="field"><label>g<sub>CACC,min</sub> [m] <span class="val" id="v-caccGMin">2</span></label><input type="range" id="caccGMin" min="0.5" max="5" step="0.1" value="2" /></div>
+        <div class="field"><label>t<sub>hw</sub> [s] <span class="val" id="v-caccTHw">0.5</span></label><input type="range" id="caccTHw" min="0.2" max="1.5" step="0.05" value="0.5" /></div>
+      </div>
+
+      <div class="section">
+        <h2>Emergency G-Sweep</h2>
+        <p style="font-size:0.68rem;color:var(--muted);font-family:'Segoe UI',sans-serif;margin-bottom:0.5rem">Thesis §4.3 / Fig. 2.7–2.9: leader accelerates with jerk until target speed (or steady cruise if v<sub>0</sub> unreachable), then incident decel. PACC uses g<sub>min</sub>=1.7 m, δ*=0.39 s (Eq. 2.15 at v<sub>0</sub>=22.92 m/s), coordinated CAV braking one step after incident (Eq. 2.23).</p>
+        <div class="field">
+          <label>Target speed [m/s] <span class="val" id="v-emerCruiseSpd">22.92</span></label>
+          <select id="emerCruiseSpd">
+            <option value="10">10 (Fig. 2.7)</option>
+            <option value="15">15 (Fig. 2.7)</option>
+            <option value="20">20 (Fig. 2.7)</option>
+            <option value="22.92" selected>22.92 — v₀ (Fig. 2.7)</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" id="btnEmergencySweep">⚡ Run G-Sweep (PACC + CACC + RV)</button>
+          <button id="btnEmergencyFig27">Run Fig. 2.7 matrix (all speeds)</button>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="road-wrap">
+        <canvas id="roadCanvas"></canvas>
+        <div class="hud">t = <strong id="hudTime">—</strong> s &nbsp;|&nbsp; step <strong id="hudStep">—</strong></div>
+      </div>
+
+      <div class="live-strip" id="liveStrip">
+        <div><canvas id="liveSpeed"></canvas><label>Speed (live)</label></div>
+        <div><canvas id="liveAcc"></canvas><label>Acceleration (live)</label></div>
+        <div><canvas id="liveGap"></canvas><label>Gap (live)</label></div>
+        <div><canvas id="liveExcess"></canvas><label>Excess gap (live)</label></div>
+      </div>
+
+      <div class="panel-block" id="stringStabilityPanel" style="display:none">
+        <h2>String Stability Check</h2>
+        <p class="sub">Amplification ratios vs leader: R<sub>a</sub>(k) = max|a<sub>k</sub>| / max|a<sub>0</sub>|, R<sub>j</sub>(k) = max|j<sub>k</sub>| / max|j<sub>0</sub>|. String-stable if R ≤ 1 for all followers (no growth down the platoon).</p>
+        <div id="stringStabilityWrap"></div>
+        <div class="plot-area string-stab-plot" id="plot-stringStab"></div>
+      </div>
+
+      <div class="panel-block">
+        <h2>Journal Figures</h2>
+        <p class="sub">Publication style from plotFuncs.py — white background, Times New Roman, greyscale platoon, mirrored black axes. Replaced entirely on each Run.</p>
+        <div class="export-row">
+          <button id="btnExportAll">Export all plots (PNG)</button>
+          <button id="btnExportHtml">Download scenario HTML</button>
+        </div>
+        <div class="journal-grid" id="journalPlots"></div>
+      </div>
+
+      <div class="panel-block" id="emergencyPanel" style="display:none">
+        <h2>Emergency Impact Analysis</h2>
+        <p class="sub">Thesis emergency sweep · collision = gap ≤ 0 · impact Δv = |v<sub>follower</sub> − v<sub>front</sub>| at first contact · PACC replicates MainTraj_Emgcy.py (jerk build-up + case2 coordinated braking)</p>
+        <div id="emergencyTableWrap"></div>
+        <div class="export-row">
+          <button id="btnExportEmergencyAll">Export emergency plots (PNG)</button>
+          <button id="btnExportEmergencyCsv">Download summary table (CSV)</button>
+          <button id="btnExportEmergencyHtml">Download emergency report (HTML)</button>
+        </div>
+        <div class="emer-detail-row">
+          <label for="emerDetailCtrl">Controller:</label>
+          <select id="emerDetailCtrl"><option value="pacc">PACC</option><option value="cacc">CACC</option><option value="rv">RV (HDM-IDM)</option></select>
+          <label for="emerDetailG">Severity:</label>
+          <select id="emerDetailG"></select>
+          <button id="btnLoadEmerDetail">Load detail view</button>
+        </div>
+        <div class="journal-grid" id="emergencyPlots"></div>
+      </div>
+    </main>
+  </div>
+
+<script>
+/* ─── PACC core (simFuncs.py) ─────────────────────────────────────────── */
+function spaceGap(minGap, delta, deltaStar, alpha, maxBrake, speed, prevSpeed, acc, prevAcc) {
+  return minGap
+    + (speed + acc * deltaStar) ** 2 / (2 * maxBrake)
+    + 0.5 * acc * deltaStar ** 2 + speed * deltaStar
+    - (prevSpeed + prevAcc * deltaStar) ** 2 / (2 * maxBrake);
+}
+
+function carFollowing(tt, veh, gap, spd, acc, deltaStar, minGap, maxBrake) {
+  const a = deltaStar ** 2 / (2 * maxBrake);
+  const b = 0.5 * deltaStar ** 2 + spd[tt][veh] * deltaStar / maxBrake;
+  const c = minGap - gap[tt][veh]
+    + spd[tt][veh] ** 2 / (2 * maxBrake) + spd[tt][veh] * deltaStar
+    - (spd[tt - 1][veh - 1] + acc[tt - 1][veh - 1] * deltaStar) ** 2 / (2 * maxBrake);
+  const disc = b * b - 4 * a * c;
+  if (disc < 0) return 0;
+  let acc2 = (-b + Math.sqrt(disc)) / (2 * a);
+  if (spd[tt][veh] === 0 && acc2 <= 0) acc2 = 0;
+  return acc2;
+}
+
+function computeMinGap(gapMinBase, maxBrake, maxAccVal, minJerk = -20) {
+  return gapMinBase - (Math.pow(-maxBrake - maxAccVal, 3) / (3 * minJerk * minJerk));
+}
+
+function computeMaxSpd(vehicleLength, minGap, alpha, maxBrake) {
+  return Math.sqrt(-((vehicleLength + minGap) * 2 * (-maxBrake) * (1 - alpha)) / alpha);
+}
+
+
+/** May_MainScript.py lines 248–318 — positive jerk loop (jerkval = +jerkvalue/10) */
+function buildPositiveJerkSchedule(opts) {
+  const { jerkAmp, dt, vehicleLength, gapMinBase, alpha, maxBrake, maxAccVal, minimumSpeed, minJerk } = opts;
+  const jerkval = Math.abs(jerkAmp) || 0.9;
+  const minGap = computeMinGap(gapMinBase, maxBrake, maxAccVal, minJerk);
+  const max_acc = maxAccVal;
+  const max_spd = computeMaxSpd(vehicleLength, minGap, alpha, maxBrake);
+  const eps = dt / 10;
+  const speedHeadroom = max_spd - minimumSpeed;
+
+  let acc_time = Math.round(max_acc / (Math.abs(jerkval) * dt));
+  const new_jerkval1 = max_acc / (acc_time * dt);
+  const acc_distance_time1 = max_acc / new_jerkval1;
+  let new_jerkval, acc_distance_time;
+
+  if (speedHeadroom / (Math.abs(jerkval) * acc_distance_time1) - acc_distance_time1 < 0) {
+    const acc_time1 = Math.round(Math.sqrt(speedHeadroom / Math.abs(jerkval)) * (1 / dt));
+    new_jerkval = speedHeadroom / ((acc_time1 * dt) ** 2);
+    acc_distance_time = Math.sqrt(speedHeadroom / Math.abs(new_jerkval));
+  } else {
+    acc_time = Math.round(max_acc / (jerkval * dt));
+    new_jerkval = max_acc / (acc_time * dt);
+    acc_distance_time = max_acc / new_jerkval;
+  }
+
+  let acc_zero_distance_time = Math.floor(
+    ((speedHeadroom / (Math.abs(new_jerkval) * acc_distance_time)) - acc_distance_time) * (1 / dt)
+  ) * dt;
+
+  let time0, time1, trapezoidal;
+  if (acc_zero_distance_time > 0) {
+    trapezoidal = true;
+    time0 = [0, acc_distance_time + acc_zero_distance_time - eps, 3 * acc_distance_time + 2 * acc_zero_distance_time - eps];
+    time1 = [acc_distance_time - eps, 3 * acc_distance_time + acc_zero_distance_time - eps, 4 * acc_distance_time + 2 * acc_zero_distance_time - eps];
+  } else {
+    trapezoidal = false;
+    acc_zero_distance_time = 0;
+    acc_distance_time = Math.floor((1 / dt) * Math.sqrt(speedHeadroom / Math.abs(new_jerkval))) * dt;
+    time0 = [0, acc_distance_time - eps, 3 * acc_distance_time - eps];
+    time1 = [acc_distance_time - eps, 3 * acc_distance_time - eps, 4 * acc_distance_time - eps];
+  }
+
+  const jerkVal = [new_jerkval, -new_jerkval, new_jerkval];
+  const initialSpeed = new_jerkval < 0 ? 22.66 : minimumSpeed;
+  const spdMax = new_jerkval < 0 ? max_spd + 0.5
+    : acc_zero_distance_time > 0
+      ? Math.abs(new_jerkval) * acc_distance_time * (acc_distance_time + acc_zero_distance_time) + initialSpeed
+      : initialSpeed + new_jerkval * acc_distance_time * acc_distance_time;
+
+  return {
+    time0, time1, jerkVal, initialSpeed, spdMax, newJerkval: new_jerkval,
+    accZeroDistanceTime: acc_zero_distance_time, accDistanceTime: acc_distance_time,
+    minGap, trapezoidal, jerkSign: 'positive', inputJerkval: jerkval
+  };
+}
+
+/** May_MainScript.py lines 553–621 — negative jerk loop (jerkval = −jerkvalue/10) */
+function buildNegativeJerkSchedule(opts) {
+  const { jerkAmp, dt, vehicleLength, gapMinBase, alpha, maxBrake, maxAccVal, minimumSpeed, minJerk } = opts;
+  const jerkval = -(Math.abs(jerkAmp) || 0.9);
+  const minGap = computeMinGap(gapMinBase, maxBrake, maxAccVal, minJerk);
+  const max_acc = -maxAccVal;
+  const max_spd = computeMaxSpd(vehicleLength, minGap, alpha, maxBrake);
+  const eps = dt / 10;
+  const speedHeadroom = max_spd - minimumSpeed;
+
+  let acc_time = Math.round(max_acc / (jerkval * dt));
+  const new_jerkval1 = max_acc / (acc_time * dt);
+  const acc_distance_time1 = max_acc / new_jerkval1;
+  let new_jerkval, acc_distance_time;
+
+  // Note: >= 0 branch (opposite of positive loop)
+  if (speedHeadroom / (Math.abs(jerkval) * acc_distance_time1) - acc_distance_time1 >= 0) {
+    new_jerkval = max_acc / (acc_time * dt);
+    acc_distance_time = max_acc / new_jerkval;
+  } else {
+    acc_time = Math.round(Math.sqrt(speedHeadroom / Math.abs(jerkval)) * (1 / dt));
+    new_jerkval = -(speedHeadroom / ((acc_time * dt) ** 2));
+    acc_distance_time = Math.sqrt(speedHeadroom / Math.abs(new_jerkval));
+  }
+
+  let acc_zero_distance_time = Math.floor(
+    ((speedHeadroom / (Math.abs(new_jerkval) * acc_distance_time)) - acc_distance_time) * (1 / dt)
+  ) * dt;
+
+  let time0, time1, trapezoidal;
+  if (acc_zero_distance_time > 0) {
+    trapezoidal = true;
+    time0 = [0, acc_distance_time + acc_zero_distance_time - eps, 3 * acc_distance_time + 2 * acc_zero_distance_time - eps];
+    time1 = [acc_distance_time - eps, 3 * acc_distance_time + acc_zero_distance_time - eps, 4 * acc_distance_time + 2 * acc_zero_distance_time - eps];
+  } else {
+    trapezoidal = false;
+    acc_zero_distance_time = 0;
+    acc_distance_time = Math.floor((1 / dt) * Math.sqrt(speedHeadroom / Math.abs(new_jerkval))) * dt;
+    time0 = [0, acc_distance_time - eps, 3 * acc_distance_time - eps];
+    time1 = [acc_distance_time - eps, 3 * acc_distance_time - eps, 4 * acc_distance_time - eps];
+  }
+
+  const jerkVal = [new_jerkval, -new_jerkval, new_jerkval];
+  const initialSpeed = 22.66;
+  const spdMax = max_spd + 0.5;
+
+  return {
+    time0, time1, jerkVal, initialSpeed, spdMax, newJerkval: new_jerkval,
+    accZeroDistanceTime: acc_zero_distance_time, accDistanceTime: acc_distance_time,
+    minGap, trapezoidal, jerkSign: 'negative', inputJerkval: jerkval
+  };
+}
+
+function buildLeaderJerkSchedule(opts) {
+  const { preset, simTime, minimumSpeed } = opts;
+
+  if (preset === 'cruise') {
+    return {
+      time0: [0], time1: [simTime], jerkVal: [0],
+      initialSpeed: minimumSpeed, spdMax: minimumSpeed,
+      newJerkval: 0, accZeroDistanceTime: 0, minGap: opts.gapMinBase,
+      trapezoidal: false, jerkSign: 'none', inputJerkval: 0
+    };
+  }
+
+  if (preset === 'thesis_cacc') {
+    return buildPositiveJerkSchedule({ ...opts, jerkAmp: 0.9, maxAccVal: 1, minimumSpeed: opts.minimumSpeed ?? 1 });
+  }
+
+  if (preset === 'neg_jerk') {
+    return buildNegativeJerkSchedule(opts);
+  }
+
+  // pos_jerk and wave use positive loop (wave uses same 3-phase jerk pattern)
+  return buildPositiveJerkSchedule(opts);
+}
+
+/*
+ * CACC — thesis Ch.2 Fig. 2.6 caption + Table 2.3 (NOT the generic fully-delayed variant).
+ *
+ *   a_{i,t} = a_{i-1,t-δ} + k_v (v_{i-1,t} - v_{i,t}) + k_d (g_{i,t} - g*_{i,t})
+ *   g* = max(g_CACC,min, t_hw v_i, v_i δ - ½ v_i²/a_min,e · α/(1-α))
+ *
+ * Critical: only a_{i-1} is delayed by δ; v_{i-1} is at the current step t.
+ * With a_min,e < 0 the latency term adds a positive braking margin (same sign as PACC Eq. 2.1).
+ */
+const CACC_PARAMS = { kv: 0.58, kd: 0.1, gMin: 2, tHw: 0.5, aMaxComfort: 1.5, aMinComfort: -2, clipComfort: false };
+
+function syncCaccParamsFromUi() {
+  CACC_PARAMS.kv = +document.getElementById('caccKv').value;
+  CACC_PARAMS.kd = +document.getElementById('caccKd').value;
+  CACC_PARAMS.gMin = +document.getElementById('caccGMin').value;
+  CACC_PARAMS.tHw = +document.getElementById('caccTHw').value;
+}
+
+function caccDesiredGap(v, delta, alpha, maxBrake) {
+  const aMinE = -Math.abs(maxBrake);
+  const latTerm = v * delta - 0.5 * ((v * v) / aMinE) * (alpha / (1 - alpha));
+  return Math.max(CACC_PARAMS.gMin, CACC_PARAMS.tHw * v, latTerm);
+}
+
+function caccAcceleration(tt, veh, gap, spd, acc, dt, delta, alpha, maxBrake) {
+  const delaySteps = Math.round(delta / dt);
+  const pred = tt - delaySteps;
+  if (pred < 0) return 0;
+  const aPred = acc[pred][veh - 1];
+  const vSelf = spd[tt][veh];
+  // Thesis Fig. 2.6 caption: a_{i-1,t-δ} + k_v(v_{i-1} - v_{i,t}) — only acc is delayed, not v_{i-1}
+  const vFront = spd[tt][veh - 1];
+  const gStar = caccDesiredGap(vSelf, delta, alpha, maxBrake);
+  let a = aPred + CACC_PARAMS.kv * (vFront - vSelf) + CACC_PARAMS.kd * (gap[tt][veh] - gStar);
+  if (CACC_PARAMS.clipComfort) {
+    a = Math.max(CACC_PARAMS.aMinComfort, Math.min(CACC_PARAMS.aMaxComfort, a));
+  }
+  return a;
+}
+
+function followerAcceleration(controller, tt, veh, gap, spd, acc, deltaStar, minGap, maxBrake, dt, delta, alpha) {
+  if (controller === 'cacc') return caccAcceleration(tt, veh, gap, spd, acc, dt, delta, alpha, maxBrake);
+  if (controller === 'rv') return hdmIdmConstrainedAcc(tt, veh, gap, spd, acc, dt, null);
+  return carFollowing(tt, veh, gap, spd, acc, deltaStar, minGap, maxBrake);
+}
+
+/* RV / HDM-IDM — thesis Table 2.3, Eq. 2.23–2.25 (Treiber 2000, Treiber 2006) */
+const HDM_GAMMA_TABLE = [1, 1.12, 1.17, 1.19, 1.21]; // γ₁…γ₄, γ₅₊ (Table 2.3)
+const RV_PARAMS = {
+  T: 1, reactionTime: 1, gMin: 1.7, beta: 4, vMax: 30,
+  aMax: 1.5, bComfort: 2, aMinComfort: -2, jMinComfort: -1,
+  aMinE: -7.2, jMinE: -11.3, nAnticipated: 5
+};
+const EMERGENCY_CONTROLLERS = ['pacc', 'cacc', 'rv'];
+const CTRL_LABELS = { pacc: 'PACC', cacc: 'CACC', rv: 'RV (HDM-IDM)' };
+const CTRL_COLORS = { pacc: '#0969da', cacc: '#6e7781', rv: '#cf222e' };
+
+function syncRvParamsFromUi() {
+  RV_PARAMS.T = +document.getElementById('rvT').value;
+  RV_PARAMS.reactionTime = +document.getElementById('rvReaction').value;
+  RV_PARAMS.gMin = +document.getElementById('rvGMin').value;
+  RV_PARAMS.beta = +document.getElementById('rvBeta').value;
+  RV_PARAMS.vMax = +document.getElementById('rvVMax').value;
+  RV_PARAMS.aMax = +document.getElementById('rvAMax').value;
+  RV_PARAMS.aMinE = -Math.abs(+document.getElementById('rvAMinE').value);
+  RV_PARAMS.jMinE = -Math.abs(+document.getElementById('rvJMinE').value);
+}
+
+function rvMaxBrakeAbs() {
+  syncRvParamsFromUi();
+  return Math.abs(RV_PARAMS.aMinE);
+}
+
+function cavMaxBrakeAbs() {
+  return +document.getElementById('maxBrake').value;
+}
+
+function effectiveBrakeParams(controller) {
+  syncRvParamsFromUi();
+  if (controller === 'rv') {
+    return {
+      maxBrake: rvMaxBrakeAbs(),
+      maxAccVal: RV_PARAMS.aMax,
+      minJerk: RV_PARAMS.jMinE,
+      gapMinBase: RV_PARAMS.gMin
+    };
+  }
+  return {
+    maxBrake: cavMaxBrakeAbs(),
+    maxAccVal: THESIS_EMERGENCY.MAX_ACC,
+    minJerk: THESIS_EMERGENCY.JMIN_E,
+    gapMinBase: +document.getElementById('minGap').value
+  };
+}
+
+function rvReactionSteps(dt) {
+  return Math.round(RV_PARAMS.reactionTime / dt);
+}
+
+function hdmGammaForFollower(followerNum) {
+  const idx = Math.min(Math.max(1, followerNum), RV_PARAMS.nAnticipated) - 1;
+  return HDM_GAMMA_TABLE[idx];
+}
+
+/** IDM equilibrium gap Eq. 2.23 — (g_min + vT)[1 − (v/v_max)^β]^(-1/2) */
+function idmSteadyGap(v) {
+  const vv = Math.max(0, v);
+  const freeFactor = Math.max(1e-6, 1 - Math.pow(vv / RV_PARAMS.vMax, RV_PARAMS.beta));
+  return (RV_PARAMS.gMin + vv * RV_PARAMS.T) * Math.pow(freeFactor, -0.5);
+}
+
+/** RV steady spacing at incident: γ × IDM equilibrium (Eq. 2.24, thesis §4.3). */
+function rvSteadyGap(v, followerNum) {
+  return hdmGammaForFollower(followerNum) * idmSteadyGap(v);
+}
+
+function hdmIdmDynamicGap(vSelf, deltaV, followerNum) {
+  const vv = Math.max(0, vSelf);
+  const s0 = hdmGammaForFollower(followerNum) * RV_PARAMS.gMin;
+  const interact = Math.max(0, vv * RV_PARAMS.T + (vv * deltaV) / (2 * Math.sqrt(RV_PARAMS.aMax * RV_PARAMS.bComfort)));
+  return s0 + interact;
+}
+
+/** HDM-IDM acceleration with T′-delayed gap and speeds (Treiber 2006; thesis §4.3). */
+function hdmIdmAcceleration(tt, veh, gap, spd, acc, dt) {
+  const delaySteps = rvReactionSteps(dt);
+  const pred = tt - delaySteps;
+  const cur = Math.max(0, tt);
+  const vSelf = pred >= 0 ? spd[pred][veh] : spd[cur][veh];
+  const vFront = pred >= 0 ? spd[pred][veh - 1] : spd[cur][veh - 1];
+  const gapVal = Math.max(pred >= 0 ? gap[pred][veh] : gap[cur][veh], 0.1);
+  const deltaV = vSelf - vFront;
+  const sStar = hdmIdmDynamicGap(vSelf, deltaV, veh);
+  const freeTerm = Math.pow(Math.max(0, vSelf) / RV_PARAMS.vMax, RV_PARAMS.beta);
+  const interactTerm = Math.pow(sStar / gapVal, 2);
+  let a = RV_PARAMS.aMax * (1 - freeTerm - interactTerm);
+  return Math.max(RV_PARAMS.aMinComfort, Math.min(RV_PARAMS.aMax, a));
+}
+
+/**
+ * RV emergency start step for follower v — T′ reaction cascade (thesis §4.3).
+ * Follower v hard-brakes at incident + v·T′ (F1 at T′, F2 at 2T′, …), matching
+ * MainTraj manual stagger scaled to T′=1 s rather than 0.1 s per index.
+ */
+function rvCascadeEmergencyStartStep(veh, emerStep, dt) {
+  return emerStep + veh * rvReactionSteps(dt);
+}
+
+/** HDM-IDM + RV comfort / emergency jerk limits for normal jerk scenarios. */
+function hdmIdmConstrainedAcc(tt, veh, gap, spd, acc, dt, emerStep) {
+  let a = hdmIdmAcceleration(tt, veh, gap, spd, acc, dt);
+  if (emerStep !== null && tt >= emerStep + 1 && a > 0) a = 0;
+  const rvBrake = Math.abs(RV_PARAMS.aMinE);
+  return Math.max(a, acc[tt - 1][veh] + RV_PARAMS.jMinE * dt, -rvBrake);
+}
+
+
+function followerEquilibriumGap(controller, speed, vehIdx, ctx) {
+  const { minGap, delta, deltaStar, alpha, maxBrake } = ctx;
+  if (controller === 'cacc') return caccDesiredGap(speed, delta, alpha, maxBrake);
+  if (controller === 'rv') return rvSteadyGap(speed, vehIdx);
+  return thesisPaccSteadyGap(speed, minGap, deltaStar);
+}
+
+function followerDesiredGap(controller, minGap, delta, deltaStar, alpha, maxBrake, speed, prevSpeed, acc, prevAcc, vehIdx) {
+  if (controller === 'cacc') return caccDesiredGap(speed, delta, alpha, maxBrake);
+  if (controller === 'rv') return rvSteadyGap(speed, vehIdx);
+  return spaceGap(minGap, delta, deltaStar, alpha, maxBrake, speed, prevSpeed, acc, prevAcc);
+}
+
+function initFollowerGapsAndPositions(controller, speed, ctx, nVeh, vehLen, pos, spd, gap, spacing, dsg, relSpd) {
+  for (let v = 1; v < nVeh; v++) {
+    const g0 = followerEquilibriumGap(controller, speed, v, ctx);
+    gap[0][v] = g0;
+    pos[0][v] = pos[0][v - 1] - vehLen - g0;
+    spacing[0][v] = pos[0][v - 1] - pos[0][v];
+    dsg[0][v] = g0;
+    relSpd[0][v] = spd[0][v - 1] - spd[0][v];
+  }
+}
+
+function simulationRun(p) {
+  const { nVeh, dt, simTime, delta, alpha, minGap, vehLen, maxBrake, initSpd, deltaStar, jerkSchedule } = p;
+  const controller = p.controller || 'pacc';
+  const nSteps = Math.floor(simTime / dt);
+  const mk = () => Array.from({ length: nSteps }, () => new Float64Array(nVeh));
+  const pos = mk(), spd = mk(), acc = mk(), jrk = mk(), dsg = mk(), gap = mk(), spacing = mk(), excess = mk(), relSpd = mk();
+
+  const leaderInitSpd = jerkSchedule.initialSpeed ?? initSpd;
+  const gapCtx = { minGap, delta, deltaStar, alpha, maxBrake };
+
+  for (let v = 0; v < nVeh; v++) { spd[0][v] = leaderInitSpd; acc[0][v] = 0; gap[0][v] = v ? -1 : 0; }
+  pos[0][0] = 0;
+  initFollowerGapsAndPositions(controller, leaderInitSpd, gapCtx, nVeh, vehLen, pos, spd, gap, spacing, dsg, relSpd);
+
+  const { time0, time1, jerkVal } = jerkSchedule;
+  const t0 = [...time0, simTime], t1 = [...time1, simTime + 1], jv = [...jerkVal, 0];
+  let curIdx = 0;
+  for (let tt = 0; tt < nSteps; tt++) {
+    const t = tt * dt;
+    while (curIdx < t0.length - 1 && t1[curIdx] < t) curIdx++;
+    if (t >= t0[curIdx] && t <= t1[curIdx]) jrk[tt][0] = jv[curIdx];
+  }
+
+  acc[0][0] = 0; spd[0][0] = leaderInitSpd;
+  for (let tt = 1; tt < nSteps; tt++) {
+    acc[tt][0] = acc[tt - 1][0] + jrk[tt - 1][0] * dt;
+    const ns = spd[tt - 1][0] + acc[tt - 1][0] * dt;
+    spd[tt][0] = ns < 0 ? leaderInitSpd : ns;
+    pos[tt][0] = pos[tt - 1][0] + spd[tt - 1][0] * dt + 0.5 * acc[tt - 1][0] * dt * dt;
+  }
+  for (let v = 1; v < nVeh; v++) { spd[0][v] = leaderInitSpd; acc[0][v] = 0; }
+  for (let v = 1; v < nVeh; v++) {
+    dsg[0][v] = followerDesiredGap(controller, minGap, delta, deltaStar, alpha, maxBrake, spd[0][v], spd[0][v - 1], 0, 0, v);
+    relSpd[0][v] = spd[0][v - 1] - spd[0][v];
+  }
+
+  for (let tt = 1; tt < nSteps; tt++) {
+    for (let v = 1; v < nVeh; v++) {
+      const ns = spd[tt - 1][v] + acc[tt - 1][v] * dt;
+      spd[tt][v] = ns < 0 ? 0 : ns;
+      pos[tt][v] = pos[tt - 1][v] + spd[tt - 1][v] * dt + acc[tt - 1][v] * dt * dt / 2;
+      spacing[tt][v] = pos[tt][v - 1] - pos[tt][v];
+      gap[tt][v] = spacing[tt][v] - vehLen;
+    }
+    for (let v = 1; v < nVeh; v++) {
+      acc[tt][v] = followerAcceleration(controller, tt, v, gap, spd, acc, deltaStar, minGap, maxBrake, dt, delta, alpha);
+      dsg[tt][v] = followerDesiredGap(controller, minGap, delta, deltaStar, alpha, maxBrake, spd[tt][v], spd[tt - 1][v - 1], acc[tt][v], acc[tt - 1][v - 1], v);
+      relSpd[tt][v] = spd[tt][v - 1] - spd[tt][v];
+    }
+  }
+  for (let tt = 0; tt < nSteps - 1; tt++)
+    for (let v = 0; v < nVeh; v++) jrk[tt][v] = (acc[tt + 1][v] - acc[tt][v]) / dt;
+  for (let tt = 0; tt < nSteps; tt++)
+    for (let v = 0; v < nVeh; v++) excess[tt][v] = gap[tt][v] - dsg[tt][v];
+
+  const time = Float64Array.from({ length: nSteps }, (_, i) => i * dt);
+  const presetLabel = document.getElementById('preset').selectedOptions[0].text;
+  const ctrlTag = CTRL_LABELS[controller] || controller.toUpperCase();
+  return {
+    meta: { ...p, simTime, controller, label: `${ctrlTag} · ${presetLabel}` },
+    nSteps, nVeh, time, pos, spd, acc, jrk, dsg, gap, spacing, excess, relSpd
+  };
+}
+
+/* ─── Emergency simulation — thesis Ch. II §3.5, §4.3 (MainTraj_Emgcy.py) ─── */
+const SIM_TIME = 60;
+const G_CONST = 9.81;
+const EMERGENCY_G_LEVELS = [0.5, 1, 1.5, 2, 5, 10];
+const THESIS_EMERGENCY = {
+  V0: 22.92,
+  GMIN: 1.7,
+  MAX_ACC: 1.5,
+  JMIN_E: -20,
+  JERK_INIT: 0.9,
+  GAP_MIN_BASE: 0.5,
+  SPEED_LEVELS: [10, 15, 20, 22.92],
+  STEADY_HOLD_S: 2,
+  MANUAL_CRUISE_S: 20
+};
+const EMERGENCY_PLOT_EXPORTS = [
+  { id: 'emer-nColl', save: 'Emergency_Collisions' },
+  { id: 'emer-ttc', save: 'Emergency_MinTTC' },
+  { id: 'emer-maxDv', save: 'Emergency_MaxImpact' },
+  { id: 'emer-impact-detail', save: 'Emergency_ImpactSpeeds_PACC' },
+  { id: 'emer-impact-rv', save: 'Emergency_ImpactSpeeds_RV' }
+];
+let emergencySweep = { pacc: [], cacc: [], rv: [] };
+let emergencyFig27Matrix = null;
+
+function thesisEmergencyMinGap(maxBrake) {
+  const { GAP_MIN_BASE, MAX_ACC, JMIN_E } = THESIS_EMERGENCY;
+  return GAP_MIN_BASE - (Math.pow(-maxBrake - MAX_ACC, 3) / (3 * JMIN_E * JMIN_E));
+}
+
+function thesisEmergencyDeltaStar(delta, alpha, maxBrake, refSpeed) {
+  const vRef = refSpeed ?? THESIS_EMERGENCY.V0;
+  return delta + 0.5 * (vRef / maxBrake) * (alpha / (1 - alpha));
+}
+
+function thesisPaccSteadyGap(speed, minGap, deltaStar) {
+  return minGap + Math.max(0, speed) * deltaStar;
+}
+
+function paccExtendedAcceleration(tt, veh, gap, spd, acc, deltaStar, minGap, maxBrake, dt) {
+  const jMinE = THESIS_EMERGENCY.JMIN_E;
+  const a = deltaStar ** 2 / (2 * maxBrake);
+  const b = 0.5 * deltaStar ** 2 + spd[tt][veh] * deltaStar / maxBrake;
+  const c = minGap - gap[tt][veh]
+    + spd[tt][veh] ** 2 / (2 * maxBrake) + spd[tt][veh] * deltaStar
+    - (spd[tt - 1][veh - 1] + acc[tt - 1][veh - 1] * deltaStar) ** 2 / (2 * maxBrake);
+  const disc = b * b - 4 * a * c;
+  if (disc <= 0) return Math.max(acc[tt - 1][veh] + jMinE * dt, -maxBrake);
+  let acc2 = (-b + Math.sqrt(disc)) / (2 * a);
+  if (spd[tt][veh] === 0 && acc2 <= 0) acc2 = 0;
+  return acc2;
+}
+
+function buildLeaderJerkSeries(jerkSched, nSteps, dt, simTime) {
+  const { time0, time1, jerkVal } = jerkSched;
+  const tEnd = simTime ?? SIM_TIME;
+  const t0 = [...time0, tEnd];
+  const t1 = [...time1, tEnd + 1];
+  const jv = [...jerkVal, 0];
+  const jrk = new Float64Array(nSteps);
+  let curIdx = 0;
+  for (let tt = 0; tt < nSteps; tt++) {
+    const t = tt * dt;
+    while (curIdx < t0.length - 1 && t1[curIdx] < t) curIdx++;
+    if (t >= t0[curIdx] && t <= t1[curIdx]) jrk[tt] = jv[curIdx];
+  }
+  return jrk;
+}
+
+function getEmergencyBaseParams() {
+  syncRvParamsFromUi();
+  const p = getParams();
+  const cruiseSpd = +document.getElementById('emerCruiseSpd').value;
+  const cavBrake = cavMaxBrakeAbs();
+  const thesisMinGap = thesisEmergencyMinGap(cavBrake);
+  const jerkSched = buildPositiveJerkSchedule({
+    jerkAmp: THESIS_EMERGENCY.JERK_INIT, dt: p.dt, simTime: SIM_TIME,
+    vehicleLength: p.vehLen, gapMinBase: THESIS_EMERGENCY.GAP_MIN_BASE,
+    alpha: p.alpha, maxBrake: cavBrake,
+    maxAccVal: THESIS_EMERGENCY.MAX_ACC, minimumSpeed: 0,
+    minJerk: THESIS_EMERGENCY.JMIN_E
+  });
+  const deltaStar = thesisEmergencyDeltaStar(p.delta, p.alpha, cavBrake, jerkSched.spdMax);
+  return {
+    ...p, cruiseSpd, minGap: thesisMinGap, deltaStar, simTime: SIM_TIME, thesisMode: true,
+    cavMaxBrake: cavBrake, maxBrake: cavBrake
+  };
+}
+
+/** Contiguous crashed followers from the leader (Fig. 2.7 RV panel). */
+function countContiguousCollisionChain(gapFinal, nVeh) {
+  const collidedVehs = [];
+  for (let v = 1; v < nVeh; v++) {
+    if (gapFinal[v] <= 0) collidedVehs.push(v);
+    else break;
+  }
+  return collidedVehs;
+}
+
+/**
+ * RV emergency — thesis §4.3 HDM-IDM: γ steady gaps, T′ delayed HDM perception,
+ * per-vehicle T′ reaction cascade → max emergency brake (no V2V coordination).
+ */
+function simulationRunRvEmergency(p) {
+  syncRvParamsFromUi();
+  const { nVeh, dt, simTime, alpha, vehLen, cruiseSpd, gLevel } = p;
+  const targetSpeed = cruiseSpd;
+  const incidentDecel = G_CONST * gLevel;
+  const nSteps = Math.floor(simTime / dt);
+  const rvBrake = Math.abs(RV_PARAMS.aMinE);
+
+  const jerkSched = buildPositiveJerkSchedule({
+    jerkAmp: THESIS_EMERGENCY.JERK_INIT, dt, simTime,
+    vehicleLength: vehLen, gapMinBase: THESIS_EMERGENCY.GAP_MIN_BASE,
+    alpha, maxBrake: rvBrake, maxAccVal: RV_PARAMS.aMax, minimumSpeed: 0,
+    minJerk: RV_PARAMS.jMinE
+  });
+  /** Thesis §4.3: platoon already at cruise speed with γ steady gaps when incident occurs. */
+  const useJerkBuildup = false;
+  const leaderJerk = null;
+  const manualEmerStep = Math.round(THESIS_EMERGENCY.MANUAL_CRUISE_S / dt);
+  const gapCtx = { minGap: RV_PARAMS.gMin, delta: p.delta ?? 0.1, deltaStar: 0, alpha, maxBrake: rvBrake };
+
+  const mk = () => Array.from({ length: nSteps }, () => new Float64Array(nVeh));
+  const pos = mk(), spd = mk(), acc = mk(), jrk = mk(), dsg = mk(), gap = mk(), spacing = mk(), excess = mk(), relSpd = mk();
+  const minTtc = Float64Array.from({ length: nVeh }, () => Infinity);
+  const collisionEvents = [];
+  const collided = new Array(nVeh).fill(false);
+  const emerActive = new Array(nVeh).fill(false);
+
+  let emerStep = useJerkBuildup ? null : manualEmerStep;
+  let leaderReachedTarget = !useJerkBuildup;
+  const initLeaderSpd = useJerkBuildup ? (jerkSched.initialSpeed ?? 0) : targetSpeed;
+  const initFollowerSpd = useJerkBuildup ? initLeaderSpd : targetSpeed;
+
+  for (let v = 0; v < nVeh; v++) acc[0][v] = 0;
+  spd[0][0] = initLeaderSpd;
+  for (let v = 1; v < nVeh; v++) spd[0][v] = initFollowerSpd;
+  gap[0][0] = 0;
+  pos[0][0] = 0;
+  initFollowerGapsAndPositions('rv', initFollowerSpd, gapCtx, nVeh, vehLen, pos, spd, gap, spacing, dsg, relSpd);
+
+  for (let tt = 1; tt < nSteps; tt++) {
+    if (useJerkBuildup && !leaderReachedTarget) {
+      acc[tt][0] = acc[tt - 1][0] + leaderJerk[tt - 1] * dt;
+      spd[tt][0] = Math.max(0, spd[tt - 1][0] + acc[tt - 1][0] * dt);
+      if (Math.round(spd[tt][0] * 1e5) / 1e5 >= targetSpeed) {
+        leaderReachedTarget = true;
+        emerStep = tt;
+        acc[tt][0] = -incidentDecel;
+      }
+    } else if (leaderReachedTarget && emerStep !== null && tt >= emerStep) {
+      acc[tt][0] = -incidentDecel;
+      if (spd[tt - 1][0] <= 0) { acc[tt][0] = 0; spd[tt][0] = 0; }
+      else spd[tt][0] = Math.max(0, spd[tt - 1][0] + acc[tt - 1][0] * dt);
+    } else if (!useJerkBuildup) {
+      if (tt < emerStep) { acc[tt][0] = 0; spd[tt][0] = targetSpeed; }
+      else {
+        acc[tt][0] = -incidentDecel;
+        spd[tt][0] = Math.max(0, spd[tt - 1][0] + acc[tt - 1][0] * dt);
+        if (spd[tt][0] <= 0) { spd[tt][0] = 0; acc[tt][0] = 0; }
+      }
+    } else {
+      acc[tt][0] = 0;
+      spd[tt][0] = targetSpeed;
+    }
+    pos[tt][0] = pos[tt - 1][0] + spd[tt - 1][0] * dt + 0.5 * acc[tt - 1][0] * dt * dt;
+
+    for (let v = 1; v < nVeh; v++) {
+      if (collided[v]) {
+        spd[tt][v] = spd[tt][v - 1];
+        acc[tt][v] = acc[tt][v - 1];
+        pos[tt][v] = pos[tt][v - 1] - vehLen;
+        spacing[tt][v] = vehLen;
+        gap[tt][v] = 0;
+        relSpd[tt][v] = 0;
+      } else if (!useJerkBuildup && emerStep !== null && tt < emerStep) {
+        const g0 = rvSteadyGap(targetSpeed, v);
+        spd[tt][v] = targetSpeed;
+        acc[tt][v] = 0;
+        gap[tt][v] = g0;
+        pos[tt][v] = pos[tt][v - 1] - vehLen - g0;
+        spacing[tt][v] = pos[tt][v - 1] - pos[tt][v];
+        relSpd[tt][v] = spd[tt][v - 1] - targetSpeed;
+      } else {
+        spd[tt][v] = Math.max(0, spd[tt - 1][v] + acc[tt - 1][v] * dt);
+        pos[tt][v] = pos[tt - 1][v] + spd[tt - 1][v] * dt + 0.5 * acc[tt - 1][v] * dt * dt;
+        spacing[tt][v] = pos[tt][v - 1] - pos[tt][v];
+        gap[tt][v] = spacing[tt][v] - vehLen;
+        relSpd[tt][v] = spd[tt][v - 1] - spd[tt][v];
+        const closingSpeed = Math.max(0, spd[tt][v] - spd[tt][v - 1]);
+        if (closingSpeed > 0.05 && gap[tt][v] > 0) minTtc[v] = Math.min(minTtc[v], gap[tt][v] / closingSpeed);
+        if (gap[tt][v] <= 0) {
+          collided[v] = true;
+          if (gap[tt - 1][v] > 0) {
+            collisionEvents.push({
+              veh: v, step: tt, time: tt * dt,
+              impactSpeed: Math.abs(spd[tt - 1][v] - spd[tt - 1][v - 1]),
+              vehName: vehNames(nVeh)[v]
+            });
+          }
+          gap[tt][v] = 0;
+          spd[tt][v] = spd[tt][v - 1];
+          acc[tt][v] = acc[tt][v - 1];
+          pos[tt][v] = pos[tt][v - 1] - vehLen;
+          spacing[tt][v] = vehLen;
+          relSpd[tt][v] = 0;
+        }
+      }
+    }
+
+    const emerGate = emerStep !== null ? emerStep + 1 : Infinity;
+    for (let v = 1; v < nVeh; v++) {
+      if (collided[v]) {
+        dsg[tt][v] = rvSteadyGap(spd[tt][v], v);
+        continue;
+      }
+      if (!useJerkBuildup && emerStep !== null && tt < emerStep) {
+        acc[tt][v] = 0;
+      } else {
+        if (emerStep !== null && tt >= rvCascadeEmergencyStartStep(v, emerStep, dt)) emerActive[v] = true;
+        if (emerActive[v]) {
+          acc[tt][v] = Math.max(acc[tt - 1][v] + RV_PARAMS.jMinE * dt, RV_PARAMS.aMinE);
+        } else {
+          acc[tt][v] = hdmIdmAcceleration(tt, v, gap, spd, acc, dt);
+          if (tt >= emerGate && acc[tt][v] > 0) acc[tt][v] = 0;
+          acc[tt][v] = Math.max(acc[tt][v], acc[tt - 1][v] + RV_PARAMS.jMinE * dt, -rvBrake);
+        }
+      }
+      if (spd[tt][v] === 0 && acc[tt][v] < 0) acc[tt][v] = 0;
+      dsg[tt][v] = rvSteadyGap(spd[tt][v], v);
+      relSpd[tt][v] = spd[tt][v - 1] - spd[tt][v];
+    }
+  }
+
+  for (let tt = 0; tt < nSteps - 1; tt++)
+    for (let v = 0; v < nVeh; v++) jrk[tt][v] = (acc[tt + 1][v] - acc[tt][v]) / dt;
+  for (let tt = 0; tt < nSteps; tt++)
+    for (let v = 0; v < nVeh; v++) excess[tt][v] = gap[tt][v] - dsg[tt][v];
+
+  const time = Float64Array.from({ length: nSteps }, (_, i) => i * dt);
+  const gapFinal = Float64Array.from({ length: nVeh }, (_, v) => gap[nSteps - 1][v]);
+  const safety = summarizeSafety(collisionEvents, minTtc, nVeh, gLevel, incidentDecel, gapFinal, 'chain');
+  return {
+    meta: {
+      ...p, maxBrake: rvBrake, cavMaxBrake: p.cavMaxBrake ?? cavMaxBrakeAbs(),
+      simTime, gLevel, decel: incidentDecel, mode: 'emergency', controller: 'rv',
+      useJerkBuildup, emerStep, emerTime: emerStep !== null ? emerStep * dt : null,
+      rvBrake, label: `${CTRL_LABELS.rv} emergency ${gLevel}g @ ${cruiseSpd.toFixed(2)} m/s (HDM-IDM γ)`
+    },
+    nSteps, nVeh, time, pos, spd, acc, jrk, dsg, gap, spacing, excess, relSpd,
+    safety, collisionEvents, minTtc
+  };
+}
+
+function simulationRunEmergency(p) {
+  const { nVeh, dt, simTime, delta, alpha, vehLen, maxBrake, cruiseSpd, gLevel } = p;
+  const controller = p.controller || 'pacc';
+  if (controller === 'rv') return simulationRunRvEmergency(p);
+  const isCacc = controller === 'cacc';
+  const minGap = p.minGap ?? thesisEmergencyMinGap(maxBrake);
+  const targetSpeed = cruiseSpd;
+  const jMinE = THESIS_EMERGENCY.JMIN_E;
+  const aMinE = -maxBrake;
+  const nSteps = Math.floor(simTime / dt);
+
+  const jerkSched = buildPositiveJerkSchedule({
+    jerkAmp: THESIS_EMERGENCY.JERK_INIT, dt, simTime,
+    vehicleLength: vehLen, gapMinBase: THESIS_EMERGENCY.GAP_MIN_BASE,
+    alpha, maxBrake, maxAccVal: THESIS_EMERGENCY.MAX_ACC, minimumSpeed: 0
+  });
+  const deltaStar = p.deltaStar ?? thesisEmergencyDeltaStar(delta, alpha, maxBrake, jerkSched.spdMax);
+  const useJerkBuildup = targetSpeed <= jerkSched.spdMax + 0.05;
+  const leaderJerk = useJerkBuildup ? buildLeaderJerkSeries(jerkSched, nSteps, dt, simTime) : null;
+  const steadyHoldSteps = useJerkBuildup
+    ? Math.round(THESIS_EMERGENCY.STEADY_HOLD_S / dt)
+    : Math.round(THESIS_EMERGENCY.MANUAL_CRUISE_S / dt);
+  const incidentDecel = G_CONST * gLevel;
+
+  const mk = () => Array.from({ length: nSteps }, () => new Float64Array(nVeh));
+  const pos = mk(), spd = mk(), acc = mk(), jrk = mk(), dsg = mk(), gap = mk(), spacing = mk(), excess = mk(), relSpd = mk();
+  const collided = new Array(nVeh).fill(false);
+  const minTtc = Float64Array.from({ length: nVeh }, () => Infinity);
+  const collisionEvents = [];
+
+  let emerStep = null;
+  let leaderReachedTarget = !useJerkBuildup;
+  const initLeaderSpd = useJerkBuildup ? (jerkSched.initialSpeed ?? 0) : targetSpeed;
+  const gapCtx = { minGap, delta, deltaStar, alpha, maxBrake };
+  const initFollowerSpd = useJerkBuildup ? initLeaderSpd : targetSpeed;
+  const gapSizingSpd = useJerkBuildup ? initFollowerSpd : targetSpeed;
+
+  for (let v = 0; v < nVeh; v++) { acc[0][v] = 0; }
+  spd[0][0] = initLeaderSpd;
+  for (let v = 1; v < nVeh; v++) { spd[0][v] = initFollowerSpd; }
+  gap[0][0] = 0;
+  pos[0][0] = 0;
+  if (!useJerkBuildup) emerStep = steadyHoldSteps;
+  initFollowerGapsAndPositions(controller, gapSizingSpd, gapCtx, nVeh, vehLen, pos, spd, gap, spacing, dsg, relSpd);
+
+  for (let tt = 1; tt < nSteps; tt++) {
+    if (useJerkBuildup && !leaderReachedTarget) {
+      acc[tt][0] = acc[tt - 1][0] + leaderJerk[tt - 1] * dt;
+      spd[tt][0] = Math.max(0, spd[tt - 1][0] + acc[tt - 1][0] * dt);
+      if (Math.round(spd[tt][0] * 1e5) / 1e5 >= targetSpeed) {
+        leaderReachedTarget = true;
+        emerStep = tt;
+        acc[tt][0] = -incidentDecel;
+      }
+    } else if (leaderReachedTarget && emerStep !== null && tt >= emerStep) {
+      acc[tt][0] = -incidentDecel;
+      if (spd[tt - 1][0] <= 0) { acc[tt][0] = 0; spd[tt][0] = 0; }
+      else spd[tt][0] = Math.max(0, spd[tt - 1][0] + acc[tt - 1][0] * dt);
+    } else {
+      acc[tt][0] = 0;
+      spd[tt][0] = targetSpeed;
+    }
+    pos[tt][0] = pos[tt - 1][0] + spd[tt - 1][0] * dt + 0.5 * acc[tt - 1][0] * dt * dt;
+
+    for (let v = 1; v < nVeh; v++) {
+      if (collided[v]) {
+        spd[tt][v] = spd[tt][v - 1];
+        acc[tt][v] = acc[tt][v - 1];
+        pos[tt][v] = pos[tt][v - 1] - vehLen;
+        spacing[tt][v] = vehLen;
+        gap[tt][v] = 0;
+        relSpd[tt][v] = 0;
+      } else {
+        spd[tt][v] = Math.max(0, spd[tt - 1][v] + acc[tt - 1][v] * dt);
+        pos[tt][v] = pos[tt - 1][v] + spd[tt - 1][v] * dt + 0.5 * acc[tt - 1][v] * dt * dt;
+        spacing[tt][v] = pos[tt][v - 1] - pos[tt][v];
+        gap[tt][v] = spacing[tt][v] - vehLen;
+        relSpd[tt][v] = spd[tt][v - 1] - spd[tt][v];
+        const closingSpeed = Math.max(0, spd[tt][v] - spd[tt][v - 1]);
+        if (closingSpeed > 0.05 && gap[tt][v] > 0) minTtc[v] = Math.min(minTtc[v], gap[tt][v] / closingSpeed);
+        if (gap[tt][v] <= 0) {
+          collided[v] = true;
+          collisionEvents.push({
+            veh: v, step: tt, time: tt * dt,
+            impactSpeed: Math.abs(spd[tt - 1][v] - spd[tt - 1][v - 1]),
+            vehName: vehNames(nVeh)[v]
+          });
+          spd[tt][v] = spd[tt][v - 1];
+          acc[tt][v] = acc[tt][v - 1];
+          pos[tt][v] = pos[tt][v - 1] - vehLen;
+          gap[tt][v] = 0;
+          spacing[tt][v] = vehLen;
+          relSpd[tt][v] = 0;
+        }
+      }
+    }
+
+    const cavEmerStep = emerStep !== null ? emerStep + 1 : Infinity;
+    for (let v = 1; v < nVeh; v++) {
+      if (collided[v]) {
+        dsg[tt][v] = followerEquilibriumGap(controller, spd[tt][v], v, gapCtx);
+        continue;
+      }
+      if (tt >= cavEmerStep) {
+        acc[tt][v] = Math.max(acc[tt - 1][v] + jMinE * dt, aMinE);
+      } else if (isCacc) {
+        acc[tt][v] = caccAcceleration(tt, v, gap, spd, acc, dt, delta, alpha, maxBrake);
+      } else if (useJerkBuildup) {
+        acc[tt][v] = paccExtendedAcceleration(tt, v, gap, spd, acc, deltaStar, minGap, maxBrake, dt);
+      } else {
+        acc[tt][v] = 0;
+      }
+      if (spd[tt][v] === 0 && acc[tt][v] < 0) acc[tt][v] = 0;
+      dsg[tt][v] = isCacc
+        ? followerEquilibriumGap(controller, spd[tt][v], v, gapCtx)
+        : followerDesiredGap('pacc', minGap, delta, deltaStar, alpha, maxBrake, spd[tt][v], spd[tt - 1][v - 1], acc[tt][v], acc[tt - 1][v - 1], v);
+      relSpd[tt][v] = spd[tt][v - 1] - spd[tt][v];
+    }
+  }
+
+  for (let tt = 0; tt < nSteps - 1; tt++)
+    for (let v = 0; v < nVeh; v++) jrk[tt][v] = (acc[tt + 1][v] - acc[tt][v]) / dt;
+  for (let tt = 0; tt < nSteps; tt++)
+    for (let v = 0; v < nVeh; v++) excess[tt][v] = gap[tt][v] - dsg[tt][v];
+
+  const time = Float64Array.from({ length: nSteps }, (_, i) => i * dt);
+  const gapFinal = Float64Array.from({ length: nVeh }, (_, v) => gap[nSteps - 1][v]);
+  const safety = summarizeSafety(collisionEvents, minTtc, nVeh, gLevel, incidentDecel, gapFinal);
+  return {
+    meta: {
+      ...p, simTime, gLevel, decel: incidentDecel, mode: 'emergency', controller,
+      useJerkBuildup, emerStep, emerTime: emerStep !== null ? emerStep * dt : null,
+      thesisMinGap: minGap, thesisDeltaStar: deltaStar,
+      label: `${CTRL_LABELS[controller] || controller} emergency ${gLevel}g @ ${cruiseSpd.toFixed(2)} m/s (thesis)`
+    },
+    nSteps, nVeh, time, pos, spd, acc, jrk, dsg, gap, spacing, excess, relSpd,
+    safety, collisionEvents, minTtc
+  };
+}
+
+function summarizeSafety(collisionEvents, minTtc, nVeh, gLevel, decel, gapFinal, countMode) {
+  const impactByVeh = {};
+  collisionEvents.forEach(c => { impactByVeh[c.veh] = c.impactSpeed; });
+  let collidedVehs = collisionEvents.map(c => c.veh);
+  if (gapFinal) {
+    collidedVehs = countMode === 'chain'
+      ? countContiguousCollisionChain(gapFinal, nVeh)
+      : (() => {
+          const list = [];
+          for (let v = 1; v < nVeh; v++) if (gapFinal[v] <= 0) list.push(v);
+          return list;
+        })();
+  } else {
+    collidedVehs = [...new Set(collidedVehs)];
+  }
+  collidedVehs.sort((a, b) => a - b);
+  let globalMinTtc = Infinity;
+  for (let v = 1; v < nVeh; v++) if (minTtc[v] < globalMinTtc) globalMinTtc = minTtc[v];
+  if (!Number.isFinite(globalMinTtc)) globalMinTtc = null;
+  const maxImpact = collisionEvents.length
+    ? Math.max(...collisionEvents.map(c => c.impactSpeed)) : 0;
+  const impactDetail = collisionEvents.length
+    ? collisionEvents.map(c => `${c.vehName}: ${c.impactSpeed.toFixed(2)} m/s`).join(' · ')
+    : '—';
+  return {
+    gLevel, decel, nCollisions: collidedVehs.length,
+    collidedVehs, collidedNames: collidedVehs.map(v => vehNames(nVeh)[v]),
+    impactByVeh, maxImpactSpeed: maxImpact, impactDetail,
+    minTtcPerVeh: Array.from(minTtc), globalMinTtc,
+    collisionEvents
+  };
+}
+
+function purgeEmergencyPlots() {
+  const container = document.getElementById('emergencyPlots');
+  container.querySelectorAll('.plot-area').forEach(el => { if (el.data) Plotly.purge(el); });
+  container.innerHTML = '';
+}
+
+function severityLabel(g) {
+  return `${g}g`;
+}
+
+function barChartYRange(values) {
+  let max = 0;
+  (Array.isArray(values) ? values : [values]).flat().forEach(v => {
+    if (v != null && v !== '' && !Number.isNaN(v)) max = Math.max(max, Number(v));
+  });
+  if (max <= 0) return [0, 1];
+  const headroom = Math.max(max * 0.28, 0.65);
+  return [0, max + headroom];
+}
+
+function applyBarLabelRoom(layout, yValues) {
+  layout.margin = { ...(layout.margin || {}), t: Math.max((layout.margin && layout.margin.t) || 48, 62) };
+  layout.yaxis.rangemode = 'tozero';
+  layout.yaxis.range = barChartYRange(yValues);
+  layout.uniformtext = { mode: 'show', minsize: 8 };
+  return layout;
+}
+
+function applyIntegerCountAxis(layout, yValues) {
+  applyBarLabelRoom(layout, yValues);
+  let max = 0;
+  yValues.forEach(v => { if (v != null && !Number.isNaN(v)) max = Math.max(max, Number(v)); });
+  const top = Math.max(Math.ceil(max + 0.75), 1);
+  layout.yaxis.range = [0, top];
+  layout.yaxis.dtick = 1;
+  layout.yaxis.tickformat = ',d';
+  return layout;
+}
+
+function emergencyPlotLayout(yTitle, gVals) {
+  const labels = gVals.map(severityLabel);
+  const layout = journalLayout(yTitle);
+  layout.title = { text: '', font: { size: 1 } };
+  layout.height = PLOT_STYLE.height;
+  layout.xaxis.title = 'Incident severity [g]';
+  layout.xaxis.type = 'category';
+  layout.xaxis.categoryorder = 'array';
+  layout.xaxis.categoryarray = labels;
+  return layout;
+}
+
+function controllerCompareTraces(sweep, gLabels, field, names) {
+  return names.map(name => ({
+    x: gLabels,
+    y: sweep[name].map(r => r.safety[field] ?? null),
+    name: CTRL_LABELS[name] || name.toUpperCase(),
+    type: 'bar',
+    marker: { color: CTRL_COLORS[name] || '#888', line: { color: 'black', width: 1 } },
+    text: sweep[name].map(r => {
+      const v = r.safety[field];
+      if (v == null) return '';
+      return field === 'nCollisions' ? String(Math.round(v)) : Number(v).toFixed(2);
+    }),
+    textposition: 'outside',
+    cliponaxis: false
+  }));
+}
+
+function buildImpactDetailCard(container, sweep, ctrl, plotId, saveName, title) {
+  const gVals = sweep.pacc.map(r => r.gLevel);
+  const gLabels = gVals.map(severityLabel);
+  const nVehRef = sweep.pacc[0]?.sim?.nVeh ?? 10;
+  const grey = vehColors(nVehRef);
+  const card = document.createElement('div');
+  card.className = 'plot-card';
+  card.style.gridColumn = '1 / -1';
+  card.innerHTML = `<div class="plot-head"><span>${title}</span><button type="button" class="btn-dl-emer" data-save="${saveName}">PNG</button></div><div class="plot-area" id="${plotId}"></div>`;
+  container.appendChild(card);
+  const impactTraces = [];
+  for (let v = 1; v < nVehRef; v++) {
+    const everHit = sweep[ctrl].some(r => r.safety.collidedVehs.includes(v));
+    if (!everHit) continue;
+    impactTraces.push({
+      x: gLabels,
+      y: sweep[ctrl].map(r => r.safety.impactByVeh[v] ?? null),
+      name: vehNames(nVehRef)[v],
+      type: 'bar',
+      marker: { color: grey[v], line: { color: 'black', width: 1 } },
+      text: sweep[ctrl].map(r => {
+        const dv = r.safety.impactByVeh[v];
+        return dv == null ? '' : dv.toFixed(2);
+      }),
+      textposition: 'outside',
+      cliponaxis: false
+    });
+  }
+  const layout2 = applyBarLabelRoom(emergencyPlotLayout('Impact speed Δv [m/s]', gVals), impactTraces.map(t => t.y));
+  layout2.barmode = 'group';
+  Plotly.newPlot(plotId,
+    impactTraces.length ? impactTraces : [{ x: gLabels, y: gLabels.map(() => null), type: 'bar', name: 'No collisions' }],
+    layout2, { responsive: true, displayModeBar: false });
+}
+
+function buildEmergencySummaryPlots(sweep) {
+  purgeEmergencyPlots();
+  const container = document.getElementById('emergencyPlots');
+  const gVals = sweep.pacc.map(r => r.gLevel);
+  const gLabels = gVals.map(severityLabel);
+
+  const compareDefs = [
+    { key: 'nColl', title: 'Vehicles in collision (PACC vs CACC vs RV)', y: 'Count', field: 'nCollisions', save: 'Emergency_Collisions', integer: true },
+    { key: 'ttc', title: 'Minimum TTC [s] (PACC vs CACC vs RV)', y: 'TTC [s]', field: 'globalMinTtc', save: 'Emergency_MinTTC', integer: false },
+    { key: 'maxDv', title: 'Max impact Δv [m/s] (PACC vs CACC vs RV)', y: 'Δv [m/s]', field: 'maxImpactSpeed', save: 'Emergency_MaxImpact', integer: false }
+  ];
+
+  compareDefs.forEach(def => {
+    const card = document.createElement('div');
+    card.className = 'plot-card';
+    card.style.gridColumn = def.key === 'maxDv' ? '1 / -1' : '';
+    card.innerHTML = `<div class="plot-head"><span>${def.title}</span><button type="button" class="btn-dl-emer" data-save="${def.save}">PNG</button></div><div class="plot-area" id="emer-${def.key}"></div>`;
+    container.appendChild(card);
+    const traces = controllerCompareTraces(sweep, gLabels, def.field, EMERGENCY_CONTROLLERS);
+    const allY = traces.flatMap(t => t.y.filter(v => v != null));
+    let layout = emergencyPlotLayout(def.y, gVals);
+    layout.barmode = 'group';
+    layout = def.integer ? applyIntegerCountAxis(layout, allY) : applyBarLabelRoom(layout, allY);
+    Plotly.newPlot(`emer-${def.key}`, traces, layout, { responsive: true, displayModeBar: false });
+  });
+
+  buildImpactDetailCard(container, sweep, 'pacc', 'emer-impact-detail', 'Emergency_ImpactSpeeds_PACC', 'Impact Δv per collided follower — PACC (Fig. 2.8)');
+  buildImpactDetailCard(container, sweep, 'rv', 'emer-impact-rv', 'Emergency_ImpactSpeeds_RV', 'Impact Δv per collided follower — RV / IDM (Fig. 2.9)');
+  wireEmergencyDownloadButtons();
+}
+
+function renderEmergencyTable(sweep) {
+  const wrap = document.getElementById('emergencyTableWrap');
+  const subtitles = {
+    pacc: 'PACC — coordinated emergency braking after δ (Fig. 2.7 left)',
+    cacc: 'CACC — coordinated emergency braking after δ',
+    rv: 'RV / HDM-IDM — γ gaps, T′ cascade, follower |a<sub>min,e,R</sub>|=7.2 m/s² (Fig. 2.7 right)'
+  };
+  let html = '';
+  EMERGENCY_CONTROLLERS.forEach(ctrl => {
+    html += `<h3 style="font-family:'Segoe UI',sans-serif;font-size:0.85rem;margin:0.65rem 0 0.35rem">${subtitles[ctrl]}</h3>`;
+    const decelHdr = ctrl === 'rv'
+      ? 'Leader incident (g×9.81) [m/s²]'
+      : 'Leader decel [m/s²]';
+    const rvBrakeHdr = ctrl === 'rv'
+      ? '<th>RV follower |a<sub>min,e,R</sub>| [m/s²]</th>'
+      : '';
+    html += `<table class="safety-table"><thead><tr>
+      <th>g</th><th>${decelHdr}</th>${rvBrakeHdr}<th>Collisions</th><th>Impact Δv per vehicle</th><th>Min TTC [s]</th>
+    </tr></thead><tbody>`;
+    sweep[ctrl].forEach(r => {
+      const s = r.safety;
+      const cls = s.nCollisions ? 'hit' : 'safe';
+      const rvBrakeCell = ctrl === 'rv'
+        ? `<td>${(r.sim.meta.maxBrake ?? rvMaxBrakeAbs()).toFixed(1)}</td>`
+        : '';
+      html += `<tr class="${cls}"><td>${s.gLevel}</td><td>${s.decel.toFixed(2)}</td>${rvBrakeCell}<td>${s.nCollisions}</td>
+        <td style="text-align:left">${s.impactDetail}</td>
+        <td>${s.globalMinTtc == null ? '—' : s.globalMinTtc.toFixed(2)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    if (ctrl === 'rv') {
+      html += '<p style="font-size:0.65rem;color:var(--muted);margin:0.2rem 0 0.5rem">Leader incident uses g×9.81 m/s² (e.g. 9.81 at 1g). RV followers are capped at |a<sub>min,e,R</sub>| in the right column — not 9.8.</p>';
+    }
+  });
+  wrap.innerHTML = html;
+}
+
+function loadEmergencyDetail(gLevel, controller) {
+  const ctrl = controller || document.getElementById('emerDetailCtrl').value;
+  const row = emergencySweep[ctrl]?.find(r => r.gLevel === gLevel);
+  if (!row) return;
+  playing = false;
+  if (animId) cancelAnimationFrame(animId);
+  document.getElementById('emerDetailCtrl').value = ctrl;
+  syncSidebarForController(ctrl);
+  scenario = row.sim;
+  step = 0;
+  purgeJournalPlots();
+  purgeStringStabilityPanel();
+  buildJournalPlots(scenario);
+  renderStringStabilityPanel(scenario);
+  const rvBrake = row.sim.meta.maxBrake ?? rvMaxBrakeAbs();
+  const brakeNote = ctrl === 'rv'
+    ? ` · leader incident <strong>${row.sim.meta.decel.toFixed(1)}</strong> m/s² (g×9.81) · RV follower max brake <strong>${rvBrake.toFixed(1)}</strong> m/s²`
+    : ` · CAV |a<sub>min,e</sub>|=<strong>${(row.sim.meta.maxBrake ?? cavMaxBrakeAbs()).toFixed(1)}</strong> m/s²`;
+  document.getElementById('status').innerHTML =
+    `${CTRL_LABELS[ctrl] || ctrl} emergency: <strong>${gLevel}g</strong> · cruise ${row.sim.meta.cruiseSpd.toFixed(1)} m/s` +
+    brakeNote +
+    ` · collisions <strong>${row.sim.safety.nCollisions}</strong> · max Δv ${row.sim.safety.maxImpactSpeed.toFixed(2)} m/s`;
+  resizeCanvases();
+  drawFrame();
+}
+
+async function runEmergencySweep() {
+  playing = false;
+  if (animId) cancelAnimationFrame(animId);
+  const base = getEmergencyBaseParams();
+  emergencySweep = { pacc: [], cacc: [], rv: [] };
+  document.getElementById('status').innerHTML = 'Running emergency G-sweep (PACC + CACC + RV)…';
+
+  for (const controller of EMERGENCY_CONTROLLERS) {
+    for (const gLevel of EMERGENCY_G_LEVELS) {
+      const sim = simulationRunEmergency({ ...base, gLevel, controller });
+      emergencySweep[controller].push({ gLevel, sim, safety: sim.safety });
+    }
+  }
+
+  document.getElementById('emergencyPanel').style.display = '';
+  renderEmergencyTable(emergencySweep);
+  buildEmergencySummaryPlots(emergencySweep);
+
+  const sel = document.getElementById('emerDetailG');
+  sel.innerHTML = EMERGENCY_G_LEVELS.map(g => `<option value="${g}">${g}g</option>`).join('');
+
+  const worst = emergencySweep.pacc.reduce((a, b) =>
+    b.safety.nCollisions > a.safety.nCollisions ? b : a, emergencySweep.pacc[0]);
+  sel.value = String(worst.gLevel);
+  document.getElementById('emerDetailCtrl').value = 'pacc';
+  loadEmergencyDetail(worst.gLevel, 'pacc');
+
+  const totalPacc = emergencySweep.pacc.reduce((s, r) => s + r.safety.nCollisions, 0);
+  const totalCacc = emergencySweep.cacc.reduce((s, r) => s + r.safety.nCollisions, 0);
+  const totalRv = emergencySweep.rv.reduce((s, r) => s + r.safety.nCollisions, 0);
+  document.getElementById('status').innerHTML =
+    `G-sweep complete · cruise ${base.cruiseSpd.toFixed(1)} m/s · δ*=${base.deltaStar.toFixed(3)} · g_min=${base.minGap.toFixed(2)} m · PACC ${totalPacc} · CACC ${totalCacc} · RV ${totalRv} collisions`;
+}
+
+/** Fig. 2.7 collision matrices — PACC + RV (all thesis speeds × severities) */
+async function runEmergencyFig27Matrix() {
+  playing = false;
+  if (animId) cancelAnimationFrame(animId);
+  document.getElementById('status').innerHTML = 'Running Fig. 2.7 matrices (PACC + RV, all speeds)…';
+  const pBase = getEmergencyBaseParams();
+  const THESIS_RV_Z = [[0, 1, 2, 2, 2, 3], [0, 2, 2, 3, 3, 3], [0, 2, 2, 3, 3, 4], [0, 1, 2, 2, 3, 3]];
+  const matrixPacc = [];
+  const matrixRv = [];
+  for (const speed of THESIS_EMERGENCY.SPEED_LEVELS) {
+    const rowP = { speed, cells: [] };
+    const rowR = { speed, cells: [] };
+    for (const gLevel of EMERGENCY_G_LEVELS) {
+      const simP = simulationRunEmergency({ ...pBase, cruiseSpd: speed, gLevel, controller: 'pacc' });
+      const simR = simulationRunEmergency({ ...pBase, cruiseSpd: speed, gLevel, controller: 'rv' });
+      rowP.cells.push({ gLevel, nCollisions: simP.safety.nCollisions, maxDv: simP.safety.maxImpactSpeed, sim: simP });
+      rowR.cells.push({ gLevel, nCollisions: simR.safety.nCollisions, maxDv: simR.safety.maxImpactSpeed, sim: simR });
+    }
+    matrixPacc.push(rowP);
+    matrixRv.push(rowR);
+  }
+  emergencyFig27Matrix = matrixPacc;
+
+  const wrap = document.getElementById('emergencyTableWrap');
+  const renderMatrix = (title, matrix, thesisRef) => {
+    let h = `<h3 style="font-family:'Segoe UI',sans-serif;font-size:0.85rem;margin:0.65rem 0 0.35rem">${title}</h3>`;
+    h += '<table class="safety-table"><thead><tr><th>Speed [m/s]</th>';
+    EMERGENCY_G_LEVELS.forEach(g => { h += `<th>${g}g</th>`; });
+    h += '</tr></thead><tbody>';
+    matrix.forEach((row, ri) => {
+      h += `<tr><td>${row.speed === THESIS_EMERGENCY.V0 ? row.speed + ' (v₀)' : row.speed}</td>`;
+      row.cells.forEach((c, ci) => {
+        const cls = c.nCollisions ? 'hit' : 'safe';
+        const ref = thesisRef?.[ri]?.[ci];
+        const hint = ref != null && ref !== c.nCollisions ? ` title="thesis: ${ref}"` : '';
+        h += `<td class="${cls}"${hint}>${c.nCollisions}</td>`;
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    return h;
+  };
+  let html = renderMatrix('Fig. 2.7 — PACC vehicles colliding (thesis replication)', matrixPacc, null);
+  html += renderMatrix('Fig. 2.7 — RV / HDM-IDM vehicles colliding', matrixRv, THESIS_RV_Z);
+  html += '<p style="font-size:0.68rem;color:var(--muted);margin:0.35rem 0 0">Thesis RV reference (Crash graph produce.py Z_original1): v₀ row [0,1,2,2,3,3]. Hover RV cells where counts differ.</p>';
+  wrap.innerHTML = html;
+  document.getElementById('emergencyPanel').style.display = '';
+
+  const selSpeed = THESIS_EMERGENCY.SPEED_LEVELS.includes(+document.getElementById('emerCruiseSpd').value)
+    ? +document.getElementById('emerCruiseSpd').value : 10;
+  document.getElementById('emerCruiseSpd').value = String(selSpeed);
+  document.getElementById('v-emerCruiseSpd').textContent = String(selSpeed);
+  await runEmergencySweep();
+}
+
+/* ─── State: single active scenario only ──────────────────────────────── */
+let scenario = null;   // replaced on each Run; previous data discarded
+let step = 0;
+let playing = false;
+let animId = null;
+let playSpeed = 1;
+let lastTick = 0;
+
+const PLOT_DEFS = [
+  { key: 'pos',    field: 'pos',    y: 'Position [m]',           save: 'Position_Plot' },
+  { key: 'spd',    field: 'spd',    y: 'Speed [m/s]',            save: 'Speed_Plot' },
+  { key: 'acc',    field: 'acc',    y: 'Acceleration [m/s²]',    save: 'Acceleration_Plot' },
+  { key: 'jrk',    field: 'jrk',    y: 'Jerk [m/s³]',            save: 'Jerk_Plot' },
+  { key: 'spacing',field: 'spacing',y: 'Spacing [m]',            save: 'Spacing_Plot' },
+  { key: 'gap',    field: 'gap',    y: 'Gap [m]',                save: 'Gap_Plot' },
+  { key: 'relSpd', field: 'relSpd', y: 'Relative speed [m/s]',     save: 'Relative_speed_Plot' },
+  { key: 'excess', field: 'excess', y: 'Excess gap [m]',           save: 'Excess_gap_Plot' },
+];
+
+const roadCanvas = document.getElementById('roadCanvas');
+const roadCtx = roadCanvas.getContext('2d');
+const liveCtx = {};
+['liveSpeed','liveAcc','liveGap','liveExcess'].forEach(id => {
+  liveCtx[id] = document.getElementById(id).getContext('2d');
+});
+
+function vehNames(n) {
+  const names = ['Leader', 'Follower 1'];
+  for (let i = 2; i < n; i++) names.push(`Foll. ${i}`);
+  return names;
+}
+
+function vehColors(n) {
+  return ['black', ...Array.from({ length: n - 1 }, (_, i) => {
+    const g = Math.round(200 * i / (n - 1));
+    return `rgb(${g},${g},${g})`;
+  })];
+}
+
+function applyPresetDefaults() {
+  const preset = document.getElementById('preset').value;
+  if (preset === 'thesis_cacc') {
+    document.getElementById('controller').value = 'cacc';
+    document.getElementById('jerkAmp').value = '0.9';
+    document.getElementById('v-jerk').textContent = '0.9';
+    document.getElementById('initSpd').value = '1';
+    document.getElementById('v-initSpd').textContent = '1';
+    updateControllerSections();
+  }
+}
+
+function getParams() {
+  applyPresetDefaults();
+  const nVeh = +document.getElementById('nVeh').value;
+  const dt = +document.getElementById('dt').value;
+  const delta = +document.getElementById('delta').value;
+  const alpha = +document.getElementById('alpha').value;
+  const vehLen = +document.getElementById('vehLen').value;
+  const minimumSpeed = +document.getElementById('initSpd').value;
+  const jerkAmp = +document.getElementById('jerkAmp').value;
+  const preset = document.getElementById('preset').value;
+  const controller = document.getElementById('controller').value;
+  const brake = effectiveBrakeParams(controller);
+  const { maxBrake, maxAccVal, minJerk, gapMinBase } = brake;
+  const cavMaxBrake = cavMaxBrakeAbs();
+
+  syncCaccParamsFromUi();
+  syncRvParamsFromUi();
+
+  const jerkSchedule = buildLeaderJerkSchedule({
+    preset, jerkAmp, dt, simTime: SIM_TIME,
+    vehicleLength: vehLen, gapMinBase, alpha, maxBrake,
+    maxAccVal, minimumSpeed, minJerk
+  });
+
+  const minGap = jerkSchedule.minGap ?? gapMinBase;
+  const initSpd = jerkSchedule.initialSpeed;
+  const deltaStar = delta + 0.5 * (jerkSchedule.spdMax / maxBrake) * (alpha / (1 - alpha));
+
+  return {
+    nVeh, dt, simTime: SIM_TIME, delta, alpha, minGap, vehLen, maxBrake,
+    cavMaxBrake, initSpd, deltaStar, jerkSchedule, preset, maxAccVal, minimumSpeed, controller,
+    caccParams: { ...CACC_PARAMS },
+    rvParams: { ...RV_PARAMS }
+  };
+}
+
+function syncSidebarForController(ctrl) {
+  document.getElementById('controller').value = ctrl;
+  updateControllerSections();
+}
+
+function rvBrakeAnnotationShapes(meta) {
+  const shapes = [];
+  const annotations = [];
+  const rvBrake = meta?.maxBrake ?? rvMaxBrakeAbs();
+  shapes.push({
+    type: 'line', xref: 'paper', yref: 'y',
+    x0: 0, x1: 1, y0: -rvBrake, y1: -rvBrake,
+    line: { color: '#b91c1c', width: 2, dash: 'dash' }
+  });
+  annotations.push({
+    xref: 'paper', yref: 'y', x: 0.01, y: -rvBrake,
+    text: `RV follower max brake |a_min,e,R| = ${rvBrake.toFixed(1)} m/s²`,
+    showarrow: false, xanchor: 'left', yanchor: 'bottom',
+    font: { family: 'Times New Roman, Times, serif', size: 13, color: '#b91c1c' }
+  });
+  if (meta?.mode === 'emergency' && meta.decel) {
+    shapes.push({
+      type: 'line', xref: 'paper', yref: 'y',
+      x0: 0, x1: 1, y0: -meta.decel, y1: -meta.decel,
+      line: { color: '#c2410c', width: 1.5, dash: 'dot' }
+    });
+    annotations.push({
+      xref: 'paper', yref: 'y', x: 0.99, y: -meta.decel,
+      text: `Leader incident only: ${meta.decel.toFixed(1)} m/s² (g×9.81)`,
+      showarrow: false, xanchor: 'right', yanchor: 'top',
+      font: { family: 'Times New Roman, Times, serif', size: 12, color: '#c2410c' }
+    });
+  }
+  return { shapes, annotations };
+}
+
+function updateControllerSections() {
+  const ctrl = document.getElementById('controller').value;
+  const show = (id, visible) => {
+    document.getElementById(id).classList.toggle('hidden', !visible);
+  };
+  show('cavParamsSection', ctrl !== 'rv');
+  show('paccParamsSection', ctrl === 'pacc');
+  show('caccParamsSection', ctrl === 'cacc');
+  show('rvParamsSection', ctrl === 'rv');
+}
+
+const PLOT_STYLE = {
+  height: 420,
+  tickFont: 16,
+  titleFont: 20,
+  legendFont: 14,
+  baseFont: 18,
+  lineLeader: 2.5,
+  lineFollower: 1.8
+};
+
+/* PNG export — ~2.2:1 aspect (between square and ultra-wide) */
+const PLOT_EXPORT = {
+  width: 2200,
+  height: 1000,
+  margin: { l: 100, r: 36, t: 72, b: 68 },
+  lineLeader: 3.5,
+  lineFollower: 2.4,
+  titleStandoff: 18
+};
+
+function exportScale() {
+  return PLOT_EXPORT.height / PLOT_STYLE.height;
+}
+
+function exportFont(screenPx) {
+  return Math.round(screenPx * exportScale());
+}
+
+function axisTitleText(axis) {
+  if (!axis || axis.title == null) return '';
+  return typeof axis.title === 'string' ? axis.title : (axis.title.text || '');
+}
+
+function journalExportLayout(sourceLayout) {
+  const F = 'Times New Roman, Times, serif';
+  const E = PLOT_EXPORT;
+  const tickSz = exportFont(PLOT_STYLE.tickFont);
+  const titleSz = exportFont(PLOT_STYLE.titleFont);
+  const legendSz = exportFont(PLOT_STYLE.legendFont);
+  const baseSz = exportFont(PLOT_STYLE.baseFont);
+  return {
+    paper_bgcolor: 'white', plot_bgcolor: 'white',
+    autosize: false,
+    width: E.width,
+    height: E.height,
+    font: { family: F, size: baseSz, color: 'black' },
+    margin: { ...E.margin },
+    legend: {
+      orientation: 'h', yanchor: 'bottom', y: 1.01, xanchor: 'center', x: 0.5,
+      font: { family: F, size: legendSz },
+      tracegroupgap: 4
+    },
+    xaxis: {
+      title: { text: axisTitleText(sourceLayout.xaxis) || 'Time [s]', standoff: 12, font: { family: F, size: titleSz } },
+      showline: true, linewidth: 2, linecolor: 'black', mirror: true,
+      showgrid: true, gridwidth: 1, gridcolor: 'black', griddash: 'dash',
+      zeroline: true, zerolinecolor: 'black', zerolinewidth: 2,
+      tickfont: { family: F, size: tickSz },
+      automargin: true
+    },
+    yaxis: {
+      title: { text: axisTitleText(sourceLayout.yaxis), standoff: E.titleStandoff, font: { family: F, size: titleSz } },
+      showline: true, linewidth: 2, linecolor: 'black', mirror: true,
+      showgrid: true, gridwidth: 1, gridcolor: 'black', griddash: 'dash',
+      zeroline: true, zerolinecolor: 'black', zerolinewidth: 2,
+      tickfont: { family: F, size: tickSz },
+      automargin: true
+    },
+    hovermode: 'closest'
+  };
+}
+
+function exportTraces(data) {
+  return data.map(t => ({
+    x: t.x, y: t.y, type: t.type, mode: t.mode, name: t.name,
+    line: {
+      color: t.line.color,
+      width: (t.line.width >= PLOT_STYLE.lineLeader - 0.01) ? PLOT_EXPORT.lineLeader : PLOT_EXPORT.lineFollower
+    }
+  }));
+}
+
+async function downloadJournalPlot(graphDiv, filename) {
+  const exportLayout = journalExportLayout(graphDiv.layout);
+  const exportData = exportTraces(graphDiv.data);
+  const url = await Plotly.toImage(
+    { data: exportData, layout: exportLayout },
+    { format: 'png', width: PLOT_EXPORT.width, height: PLOT_EXPORT.height }
+  );
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename.endsWith('.png') ? filename : `${filename}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function emergencyExportLayout(sourceLayout) {
+  const F = 'Times New Roman, Times, serif';
+  const E = PLOT_EXPORT;
+  const tickSz = exportFont(PLOT_STYLE.tickFont);
+  const titleSz = exportFont(PLOT_STYLE.titleFont);
+  const legendSz = exportFont(PLOT_STYLE.legendFont);
+  const baseSz = exportFont(PLOT_STYLE.baseFont);
+  const layout = {
+    paper_bgcolor: 'white', plot_bgcolor: 'white',
+    autosize: false,
+    width: E.width,
+    height: E.height,
+    font: { family: F, size: baseSz, color: 'black' },
+    margin: { l: 100, r: 48, t: sourceLayout.barmode === 'group' ? 110 : 88, b: 68 },
+    barmode: sourceLayout.barmode || 'relative',
+    legend: {
+      orientation: 'h', yanchor: 'bottom', y: 1.01, xanchor: 'center', x: 0.5,
+      font: { family: F, size: legendSz },
+      tracegroupgap: 6
+    },
+    xaxis: {
+      title: { text: axisTitleText(sourceLayout.xaxis) || 'Incident severity [g]', standoff: 12, font: { family: F, size: titleSz } },
+      type: sourceLayout.xaxis?.type || 'category',
+      categoryorder: sourceLayout.xaxis?.categoryorder || 'array',
+      categoryarray: sourceLayout.xaxis?.categoryarray,
+      showline: true, linewidth: 2, linecolor: 'black', mirror: true,
+      showgrid: true, gridwidth: 1, gridcolor: 'black', griddash: 'dash',
+      zeroline: true, zerolinecolor: 'black', zerolinewidth: 2,
+      tickfont: { family: F, size: tickSz },
+      automargin: true
+    },
+    yaxis: {
+      title: { text: axisTitleText(sourceLayout.yaxis), standoff: E.titleStandoff, font: { family: F, size: titleSz } },
+      showline: true, linewidth: 2, linecolor: 'black', mirror: true,
+      showgrid: true, gridwidth: 1, gridcolor: 'black', griddash: 'dash',
+      zeroline: true, zerolinecolor: 'black', zerolinewidth: 2,
+      tickfont: { family: F, size: tickSz },
+      automargin: true,
+      rangemode: sourceLayout.yaxis?.rangemode || 'tozero',
+      range: sourceLayout.yaxis?.range,
+      dtick: sourceLayout.yaxis?.dtick,
+      tickformat: sourceLayout.yaxis?.tickformat
+    },
+    uniformtext: sourceLayout.uniformtext || { mode: 'show', minsize: 8 },
+    hovermode: 'closest'
+  };
+  return layout;
+}
+
+function exportEmergencyTraces(data) {
+  return data.map(t => ({
+    x: t.x, y: t.y, type: t.type, mode: t.mode, name: t.name,
+    marker: t.marker ? JSON.parse(JSON.stringify(t.marker)) : undefined,
+    line: t.line ? JSON.parse(JSON.stringify(t.line)) : undefined,
+    text: t.text, textposition: t.textposition, cliponaxis: false
+  }));
+}
+
+async function downloadEmergencyPlot(graphDiv, filename) {
+  if (!graphDiv || !graphDiv.data) return;
+  const exportLayout = emergencyExportLayout(graphDiv.layout);
+  const exportData = exportEmergencyTraces(graphDiv.data);
+  const url = await Plotly.toImage(
+    { data: exportData, layout: exportLayout },
+    { format: 'png', width: PLOT_EXPORT.width, height: PLOT_EXPORT.height }
+  );
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename.endsWith('.png') ? filename : `${filename}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function downloadBlob(filename, content, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function emergencyTableCsv() {
+  const rows = [['controller', 'g', 'leader_decel_m_s2', 'collisions', 'impact_detail', 'min_ttc_s']];
+  ['pacc', 'cacc', 'rv'].forEach(ctrl => {
+    emergencySweep[ctrl].forEach(r => {
+      const s = r.safety;
+      rows.push([
+        ctrl.toUpperCase(),
+        s.gLevel,
+        s.decel.toFixed(4),
+        s.nCollisions,
+        s.impactDetail,
+        s.globalMinTtc == null ? '' : s.globalMinTtc.toFixed(4)
+      ]);
+    });
+  });
+  return rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+}
+
+function emergencySweepReady() {
+  return emergencySweep.pacc.length > 0 && emergencySweep.cacc.length > 0 && emergencySweep.rv.length > 0;
+}
+
+function emergencyTableHtml() {
+  return document.getElementById('emergencyTableWrap').innerHTML;
+}
+
+function wireEmergencyDownloadButtons() {
+  document.querySelectorAll('#emergencyPlots .btn-dl-emer').forEach(btn => {
+    btn.onclick = () => {
+      const el = btn.closest('.plot-card').querySelector('.plot-area');
+      downloadEmergencyPlot(el, btn.dataset.save);
+    };
+  });
+}
+
+function journalLayout(yTitle) {
+  const F = 'Times New Roman, Times, serif';
+  return {
+    paper_bgcolor: 'white', plot_bgcolor: 'white',
+    font: { family: F, size: PLOT_STYLE.baseFont, color: 'black' },
+    margin: { l: 72, r: 24, t: 48, b: 58 },
+    legend: { orientation: 'h', yanchor: 'bottom', y: 1.02, xanchor: 'center', x: 0.5,
+      font: { family: F, size: PLOT_STYLE.legendFont } },
+    xaxis: { title: 'Time [s]', showline: true, linewidth: 2, linecolor: 'black', mirror: true,
+      showgrid: true, gridwidth: 1, gridcolor: 'black', griddash: 'dash',
+      zeroline: true, zerolinecolor: 'black', zerolinewidth: 2,
+      tickfont: { family: F, size: PLOT_STYLE.tickFont },
+      titlefont: { family: F, size: PLOT_STYLE.titleFont } },
+    yaxis: { title: yTitle, showline: true, linewidth: 2, linecolor: 'black', mirror: true,
+      showgrid: true, gridwidth: 1, gridcolor: 'black', griddash: 'dash',
+      zeroline: true, zerolinecolor: 'black', zerolinewidth: 2,
+      tickfont: { family: F, size: PLOT_STYLE.tickFont },
+      titlefont: { family: F, size: PLOT_STYLE.titleFont }, title_standoff: 12 },
+    hovermode: 'closest',
+    hoverlabel: { font: { family: F, size: PLOT_STYLE.tickFont } }
+  };
+}
+
+function purgeJournalPlots() {
+  const container = document.getElementById('journalPlots');
+  container.querySelectorAll('.plot-area').forEach(el => {
+    if (el.data) Plotly.purge(el);
+  });
+  container.innerHTML = '';
+}
+
+/** R_a(k), R_j(k) — amplification vs leader for string-stability screening. */
+function computeStringStabilityMetrics(data) {
+  const { nVeh, nSteps, acc, jrk } = data;
+  const maxAbs = (field, v) => {
+    let m = 0;
+    for (let t = 0; t < nSteps; t++) {
+      const x = Math.abs(field[t][v]);
+      if (x > m) m = x;
+    }
+    return m;
+  };
+  const leaderMaxA = maxAbs(acc, 0);
+  const leaderMaxJ = maxAbs(jrk, 0);
+  const rows = [];
+  for (let v = 0; v < nVeh; v++) {
+    const maxA = maxAbs(acc, v);
+    const maxJ = maxAbs(jrk, v);
+    rows.push({
+      veh: v,
+      name: vehNames(nVeh)[v],
+      maxA, maxJ,
+      Ra: leaderMaxA > 1e-9 ? maxA / leaderMaxA : 0,
+      Rj: leaderMaxJ > 1e-9 ? maxJ / leaderMaxJ : 0
+    });
+  }
+  const followers = rows.slice(1);
+  const maxDownstreamRa = followers.length ? Math.max(...followers.map(r => r.Ra)) : 0;
+  const maxDownstreamRj = followers.length ? Math.max(...followers.map(r => r.Rj)) : 0;
+  return {
+    leaderMaxA, leaderMaxJ, rows, maxDownstreamRa, maxDownstreamRj,
+    accelStringStable: followers.every(r => r.Ra <= 1.001),
+    jerkStringStable: followers.every(r => r.Rj <= 1.001)
+  };
+}
+
+function purgeStringStabilityPanel() {
+  const el = document.getElementById('plot-stringStab');
+  if (el?.data) Plotly.purge(el);
+  document.getElementById('stringStabilityWrap').innerHTML = '';
+  document.getElementById('stringStabilityPanel').style.display = 'none';
+}
+
+function renderStringStabilityPanel(data) {
+  const panel = document.getElementById('stringStabilityPanel');
+  const wrap = document.getElementById('stringStabilityWrap');
+  const plotEl = document.getElementById('plot-stringStab');
+  if (plotEl?.data) Plotly.purge(plotEl);
+
+  const m = computeStringStabilityMetrics(data);
+  const cls = ok => ok ? 'safe' : 'warn';
+  const verdictA = m.accelStringStable
+    ? '<span class="safe">✓ accel string-stable (all R<sub>a</sub> ≤ 1)</span>'
+    : `<span class="warn">✗ accel amplification downstream (max R<sub>a</sub>=${m.maxDownstreamRa.toFixed(3)})</span>`;
+  const verdictJ = m.jerkStringStable
+    ? '<span class="safe">✓ jerk string-stable (all R<sub>j</sub> ≤ 1)</span>'
+    : `<span class="warn">✗ jerk bullwhip downstream (max R<sub>j</sub>=${m.maxDownstreamRj.toFixed(3)})</span>`;
+
+  let html = `<p style="font-family:'Segoe UI',sans-serif;font-size:0.78rem;margin:0 0 0.4rem">
+    Leader peak: |a|<sub>max</sub>=${m.leaderMaxA.toFixed(3)} m/s² · |j|<sub>max</sub>=${m.leaderMaxJ.toFixed(3)} m/s³ · ${verdictA} · ${verdictJ}</p>`;
+  html += `<table class="safety-table"><thead><tr>
+    <th>Vehicle</th><th>max |a| [m/s²]</th><th>R<sub>a</sub></th><th>max |j| [m/s³]</th><th>R<sub>j</sub></th>
+  </tr></thead><tbody>`;
+  m.rows.forEach(r => {
+    const aCls = r.veh === 0 ? '' : (r.Ra <= 1.001 ? 'safe' : 'warn');
+    const jCls = r.veh === 0 ? '' : (r.Rj <= 1.001 ? 'safe' : 'warn');
+    html += `<tr><td>${r.name}</td><td>${r.maxA.toFixed(3)}</td>
+      <td class="${aCls}">${r.Ra.toFixed(3)}</td><td>${r.maxJ.toFixed(3)}</td>
+      <td class="${jCls}">${r.Rj.toFixed(3)}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  panel.style.display = '';
+
+  const followers = m.rows.slice(1);
+  const x = followers.map(r => r.name);
+  Plotly.newPlot(plotEl, [
+    { x, y: followers.map(r => r.Ra), type: 'bar', name: 'R_a', marker: { color: '#333' } },
+    { x, y: followers.map(r => r.Rj), type: 'bar', name: 'R_j', marker: { color: '#888' } },
+    { x, y: x.map(() => 1), type: 'scatter', mode: 'lines', name: 'limit = 1',
+      line: { color: '#cf222e', width: 2, dash: 'dash' }, showlegend: true }
+  ], {
+    ...journalLayout('Amplification ratio'),
+    height: 280,
+    barmode: 'group',
+    margin: { l: 56, r: 16, t: 36, b: 48 },
+    showlegend: true
+  }, { responsive: true, displayModeBar: false });
+}
+
+function buildJournalPlots(data) {
+  purgeJournalPlots();
+  const container = document.getElementById('journalPlots');
+  const names = vehNames(data.nVeh);
+  const colors = vehColors(data.nVeh);
+  const time = Array.from(data.time);
+
+  PLOT_DEFS.forEach(def => {
+    const card = document.createElement('div');
+    card.className = 'plot-card';
+    card.innerHTML = `<div class="plot-head"><span>${def.y}</span><button type="button" class="btn-dl" data-save="${def.save}">PNG</button></div><div class="plot-area" id="plot-${def.key}"></div>`;
+    container.appendChild(card);
+
+    const traces = [];
+    for (let v = 0; v < data.nVeh; v++) {
+      const y = [];
+      for (let t = 0; t < data.nSteps; t++) y.push(data[def.field][t][v]);
+      traces.push({ x: time, y, type: 'scatter', mode: 'lines', name: names[v],
+        line: { color: colors[v], width: v === 0 ? PLOT_STYLE.lineLeader : PLOT_STYLE.lineFollower } });
+    }
+
+    const layout = journalLayout(def.y);
+    layout.title = { text: '', font: { size: 1 } };
+    layout.height = PLOT_STYLE.height;
+    if (def.key === 'acc' && data.meta?.controller === 'rv') {
+      const ann = rvBrakeAnnotationShapes(data.meta);
+      layout.shapes = ann.shapes;
+      layout.annotations = ann.annotations;
+    }
+    Plotly.newPlot(`plot-${def.key}`, traces, layout, { responsive: true, displayModeBar: false });
+  });
+
+  container.querySelectorAll('.btn-dl').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.closest('.plot-card').querySelector('.plot-area').id;
+      downloadJournalPlot(document.getElementById(key), btn.dataset.save);
+    });
+  });
+}
+
+function runScenario() {
+  playing = false;
+  if (animId) cancelAnimationFrame(animId);
+  scenario = null;
+  purgeJournalPlots();
+  purgeStringStabilityPanel();
+
+  const params = getParams();
+  scenario = simulationRun(params);
+  step = 0;
+
+  const profile = params.jerkSchedule.trapezoidal ? 'trapezoidal' : 'triangular';
+  const plateau = params.jerkSchedule.accZeroDistanceTime > 0
+    ? ` · plateau ${params.jerkSchedule.accZeroDistanceTime.toFixed(1)} s`
+    : '';
+  const sign = params.jerkSchedule.jerkSign === 'negative' ? ' (−)' : params.jerkSchedule.jerkSign === 'positive' ? ' (+)' : '';
+  const ctrlNote = params.controller === 'cacc'
+    ? ` · CACC k<sub>v</sub>=${params.caccParams.kv} k<sub>d</sub>=${params.caccParams.kd} t<sub>hw</sub>=${params.caccParams.tHw}s`
+    : params.controller === 'rv'
+      ? ` · RV T=${params.rvParams.T}s T′=${params.rvParams.reactionTime}s |a<sub>min,e,R</sub>|=${params.maxBrake.toFixed(1)} m/s² γ<sub>5+</sub>=${hdmGammaForFollower(5).toFixed(2)}`
+      : '';
+  document.getElementById('status').innerHTML =
+    `Scenario: <strong>${scenario.meta.label}</strong> · ${scenario.nVeh} vehicles · ` +
+    `<strong>${profile}</strong> leader acc${plateau} · ` +
+    `jerk ${params.jerkSchedule.newJerkval.toFixed(3)} m/s³${sign} · ` +
+    `v₀ ${params.jerkSchedule.initialSpeed.toFixed(2)} m/s${ctrlNote} · data replaced`;
+  document.getElementById('hudMax')?.remove();
+
+  buildJournalPlots(scenario);
+  renderStringStabilityPanel(scenario);
+  const stab = computeStringStabilityMetrics(scenario);
+  const stabNote = ` · string check: max R<sub>a</sub>=${stab.maxDownstreamRa.toFixed(3)} max R<sub>j</sub>=${stab.maxDownstreamRj.toFixed(3)}`;
+  document.getElementById('status').innerHTML += stabNote;
+  resizeCanvases();
+  drawFrame();
+}
+
+/* ─── Top-down car sprite (not bars) ──────────────────────────────────── */
+function drawCarTopDown(ctx, cx, cy, len, wid, isLeader, greyIdx, nVeh) {
+  const hw = len / 2, hh = wid / 2;
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath();
+  ctx.ellipse(2, 3, hw * 0.92, hh * 0.85, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body base
+  let body, roof, trim;
+  if (isLeader) {
+    body = '#1a1a1a'; roof = '#2d2d2d'; trim = '#c9a227';
+  } else {
+    const g = Math.round(55 + 140 * greyIdx / Math.max(1, nVeh - 1));
+    body = `rgb(${g},${g},${g})`;
+    roof = `rgb(${Math.max(30,g-25)},${Math.max(30,g-25)},${Math.max(30,g-25)})`;
+    trim = `rgb(${Math.min(220,g+40)},${Math.min(220,g+40)},${Math.min(220,g+40)})`;
+  }
+
+  // Main body — rounded sedan silhouette
+  ctx.fillStyle = body;
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 1.2;
+  roundRect(ctx, -hw, -hh * 0.85, len, wid * 0.9, hh * 0.35);
+  ctx.fill(); ctx.stroke();
+
+  // Hood taper (front = +x)
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(hw * 0.55, -hh * 0.55);
+  ctx.lineTo(hw * 0.95, -hh * 0.25);
+  ctx.lineTo(hw * 0.95, hh * 0.25);
+  ctx.lineTo(hw * 0.55, hh * 0.55);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Cabin / roof
+  ctx.fillStyle = roof;
+  roundRect(ctx, -hw * 0.15, -hh * 0.62, len * 0.55, wid * 0.62, hh * 0.2);
+  ctx.fill();
+
+  // Windshield (front window)
+  ctx.fillStyle = 'rgba(120,170,210,0.75)';
+  ctx.strokeStyle = '#334';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(hw * 0.08, -hh * 0.48);
+  ctx.lineTo(hw * 0.32, -hh * 0.52);
+  ctx.lineTo(hw * 0.32, hh * 0.52);
+  ctx.lineTo(hw * 0.08, hh * 0.48);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Rear window
+  ctx.beginPath();
+  ctx.moveTo(-hw * 0.05, -hh * 0.42);
+  ctx.lineTo(-hw * 0.28, -hh * 0.38);
+  ctx.lineTo(-hw * 0.28, hh * 0.38);
+  ctx.lineTo(-hw * 0.05, hh * 0.42);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Headlights
+  ctx.fillStyle = '#f5f0d0';
+  ctx.beginPath();
+  ctx.ellipse(hw * 0.9, -hh * 0.38, hw * 0.07, hh * 0.18, 0, 0, Math.PI * 2);
+  ctx.ellipse(hw * 0.9, hh * 0.38, hw * 0.07, hh * 0.18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail lights
+  ctx.fillStyle = isLeader ? '#e74c3c' : '#b33';
+  ctx.fillRect(-hw * 0.98, -hh * 0.42, hw * 0.08, hh * 0.22);
+  ctx.fillRect(-hw * 0.98, hh * 0.2, hw * 0.08, hh * 0.22);
+
+  // Wheels (4)
+  ctx.fillStyle = '#222';
+  const wheelR = hh * 0.22;
+  [[hw * 0.55, -hh * 0.82], [hw * 0.55, hh * 0.82], [-hw * 0.45, -hh * 0.82], [-hw * 0.45, hh * 0.82]].forEach(([wx, wy]) => {
+    ctx.beginPath();
+    ctx.ellipse(wx, wy, wheelR * 1.1, wheelR, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#888';
+    ctx.beginPath();
+    ctx.ellipse(wx, wy, wheelR * 0.45, wheelR * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#222';
+  });
+
+  // Leader gold accent stripe
+  if (isLeader) {
+    ctx.strokeStyle = trim;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-hw * 0.7, 0);
+    ctx.lineTo(hw * 0.75, 0);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawRoad() {
+  if (!scenario) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = roadCanvas.width / dpr, h = roadCanvas.height / dpr;
+  const ctx = roadCtx;
+  const { pos, gap, dsg, spd, nVeh, nSteps } = scenario;
+  const vehLen = scenario.meta.vehLen;
+  const tt = Math.min(step, nSteps - 1);
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Sky / verge
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#dfe6ed');
+  grad.addColorStop(0.55, '#c5d0db');
+  grad.addColorStop(1, '#9aab8a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  const roadY = h * 0.38, roadH = h * 0.42;
+  ctx.fillStyle = '#4a5568';
+  ctx.fillRect(0, roadY - 8, w, roadH + 16);
+  ctx.fillStyle = '#5c6778';
+  ctx.fillRect(0, roadY, w, roadH);
+
+  // Lane edge lines
+  ctx.strokeStyle = '#f0f0f0';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  ctx.strokeRect(4, roadY + 4, w - 8, roadH - 8);
+
+  // Center dashed
+  ctx.strokeStyle = '#e8dcc0';
+  ctx.setLineDash([18, 14]);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, roadY + roadH / 2);
+  ctx.lineTo(w, roadY + roadH / 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const positions = Array.from({ length: nVeh }, (_, v) => pos[tt][v]);
+  const viewMin = Math.min(...positions) - 25;
+  const viewMax = Math.max(...positions) + 70;
+  const scale = (w - 100) / (viewMax - viewMin || 1);
+  const toX = p => 50 + (p - viewMin) * scale;
+  const carLenPx = Math.max(36, vehLen * scale * 0.95);
+  const carWidPx = carLenPx * 0.44;
+  const laneCy = roadY + roadH / 2;
+
+  for (let v = nVeh - 1; v >= 0; v--) {
+    const frontX = toX(pos[tt][v]);
+    const cx = frontX - carLenPx * 0.5;
+
+    if (v > 0) {
+      const predFront = toX(pos[tt][v - 1]);
+      const predRear = predFront - carLenPx;
+      const dsgPx = dsg[tt][v] * scale;
+      const gapPx = gap[tt][v] * scale;
+      const safe = gap[tt][v] >= dsg[tt][v];
+
+      // DSG zone
+      ctx.fillStyle = 'rgba(59,130,246,0.15)';
+      ctx.strokeStyle = 'rgba(37,99,235,0.55)';
+      ctx.setLineDash([5, 4]);
+      ctx.fillRect(predRear - dsgPx, laneCy - carWidPx * 0.7, dsgPx, carWidPx * 1.4);
+      ctx.strokeRect(predRear - dsgPx, laneCy - carWidPx * 0.7, dsgPx, carWidPx * 1.4);
+      ctx.setLineDash([]);
+
+      // Measured gap
+      ctx.fillStyle = safe ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.4)';
+      ctx.fillRect(predRear - gapPx, laneCy + carWidPx * 0.55, gapPx, 5);
+    }
+
+    drawCarTopDown(ctx, cx, laneCy, carLenPx, carWidPx, v === 0, v, nVeh);
+
+    // Speed label
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = '10px Times New Roman';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${spd[tt][v].toFixed(1)} m/s`, cx, laneCy - carWidPx - 6);
+  }
+
+  document.getElementById('hudTime').textContent = scenario.time[tt].toFixed(1);
+  document.getElementById('hudStep').textContent = `${tt} / ${nSteps - 1}`;
+}
+
+function drawLiveSpark(canvasId, field, secondField) {
+  if (!scenario) return;
+  const c = document.getElementById(canvasId);
+  const ctx = liveCtx[canvasId];
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.width / dpr, h = c.height / dpr;
+  const tt = Math.min(step, scenario.nSteps - 1);
+  const windowPts = 80;
+  const start = Math.max(0, tt - windowPts);
+  const pad = { l: 28, r: 4, t: 4, b: 14 };
+  const colors = vehColors(scenario.nVeh);
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+
+  let yMin = Infinity, yMax = -Infinity;
+  for (let t = start; t <= tt; t++) {
+    for (let v = 0; v < scenario.nVeh; v++) {
+      const val = scenario[field][t][v];
+      if (val < yMin) yMin = val;
+      if (val > yMax) yMax = val;
+      if (secondField && v > 0) {
+        const v2 = scenario[secondField][t][v];
+        if (v2 < yMin) yMin = v2;
+        if (v2 > yMax) yMax = v2;
+      }
+    }
+  }
+  if (yMin === yMax) { yMin -= 1; yMax += 1; }
+  if (canvasId === 'liveAcc' && scenario.meta?.controller === 'rv') {
+    const rvBrake = scenario.meta.maxBrake ?? rvMaxBrakeAbs();
+    yMin = Math.min(yMin, -rvBrake - 0.5);
+    if (scenario.meta.mode === 'emergency' && scenario.meta.decel) {
+      yMin = Math.min(yMin, -scenario.meta.decel - 0.5);
+    }
+  }
+  const plotW = w - pad.l - pad.r, plotH = h - pad.t - pad.b;
+  const toX = t => pad.l + ((t - start) / (tt - start || 1)) * plotW;
+  const toY = y => pad.t + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+  for (let v = 0; v < scenario.nVeh; v++) {
+    ctx.strokeStyle = colors[v];
+    ctx.lineWidth = v === 0 ? 1.5 : 1;
+    ctx.beginPath();
+    for (let t = start; t <= tt; t++) {
+      const x = toX(t), y = toY(scenario[field][t][v]);
+      if (t === start) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  if (secondField) {
+    for (let v = 1; v < scenario.nVeh; v++) {
+      ctx.strokeStyle = 'rgba(37,99,235,0.6)';
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      for (let t = start; t <= tt; t++) {
+        const x = toX(t), y = toY(scenario[secondField][t][v]);
+        if (t === start) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  if (canvasId === 'liveAcc' && scenario.meta?.controller === 'rv') {
+    const rvBrake = scenario.meta.maxBrake ?? rvMaxBrakeAbs();
+    ctx.strokeStyle = '#b91c1c';
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 1.2;
+    const yRv = toY(-rvBrake);
+    ctx.beginPath();
+    ctx.moveTo(pad.l, yRv);
+    ctx.lineTo(w - pad.r, yRv);
+    ctx.stroke();
+    if (scenario.meta.mode === 'emergency' && scenario.meta.decel) {
+      ctx.strokeStyle = '#c2410c';
+      ctx.setLineDash([2, 2]);
+      const yLead = toY(-scenario.meta.decel);
+      ctx.beginPath();
+      ctx.moveTo(pad.l, yLead);
+      ctx.lineTo(w - pad.r, yLead);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+}
+
+function drawFrame() {
+  drawRoad();
+  drawLiveSpark('liveSpeed', 'spd');
+  drawLiveSpark('liveAcc', 'acc');
+  drawLiveSpark('liveGap', 'gap', 'dsg');
+  drawLiveSpark('liveExcess', 'excess');
+}
+
+function resizeCanvases() {
+  const dpr = window.devicePixelRatio || 1;
+  const wrap = roadCanvas.parentElement;
+  roadCanvas.width = wrap.clientWidth * dpr;
+  roadCanvas.height = wrap.clientHeight * dpr;
+  roadCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ['liveSpeed','liveAcc','liveGap','liveExcess'].forEach(id => {
+    const c = document.getElementById(id);
+    const box = c.parentElement;
+    c.width = box.clientWidth * dpr;
+    c.height = 90 * dpr;
+    liveCtx[id].setTransform(dpr, 0, 0, dpr, 0, 0);
+  });
+}
+
+function tick(ts) {
+  if (!playing || !scenario) return;
+  const interval = (scenario.meta.dt / playSpeed) * 1000;
+  if (ts - lastTick >= interval) {
+    lastTick = ts;
+    if (step < scenario.nSteps - 1) { step++; drawFrame(); }
+    else { playing = false; document.getElementById('status').innerHTML += ' · <strong>complete</strong>'; return; }
+  }
+  animId = requestAnimationFrame(tick);
+}
+
+/* ─── Controls ────────────────────────────────────────────────────────── */
+const SLIDER_LABELS = {
+  nVeh: 'v-nVeh', dt: 'v-dt', delta: 'v-delta', alpha: 'v-alpha',
+  minGap: 'v-minGap', maxBrake: 'v-maxBrake', vehLen: 'v-vehLen',
+  initSpd: 'v-initSpd', jerkAmp: 'v-jerk', playSpeed: 'v-speed',
+  caccKv: 'v-caccKv', caccKd: 'v-caccKd', caccGMin: 'v-caccGMin', caccTHw: 'v-caccTHw',
+  rvT: 'v-rvT', rvReaction: 'v-rvReaction', rvGMin: 'v-rvGMin', rvBeta: 'v-rvBeta',
+  rvVMax: 'v-rvVMax', rvAMax: 'v-rvAMax', rvAMinE: 'v-rvAMinE', rvJMinE: 'v-rvJMinE'
+};
+Object.entries(SLIDER_LABELS).forEach(([id, disp]) => {
+  document.getElementById(id).addEventListener('input', e => {
+    document.getElementById(disp).textContent = e.target.value + (id === 'playSpeed' ? '×' : '');
+  });
+});
+
+document.getElementById('controller').addEventListener('change', updateControllerSections);
+document.getElementById('preset').addEventListener('change', applyPresetDefaults);
+document.getElementById('emerDetailCtrl').addEventListener('change', e => {
+  syncSidebarForController(e.target.value);
+});
+updateControllerSections();
+
+document.getElementById('btnRun').addEventListener('click', runScenario);
+document.getElementById('btnEmergencySweep').addEventListener('click', runEmergencySweep);
+document.getElementById('btnEmergencyFig27').addEventListener('click', runEmergencyFig27Matrix);
+document.getElementById('emerCruiseSpd').addEventListener('change', e => {
+  document.getElementById('v-emerCruiseSpd').textContent = e.target.value;
+});
+document.getElementById('btnLoadEmerDetail').addEventListener('click', () => {
+  loadEmergencyDetail(+document.getElementById('emerDetailG').value, document.getElementById('emerDetailCtrl').value);
+});
+document.getElementById('btnPlay').addEventListener('click', () => {
+  if (!scenario) return;
+  playing = true; lastTick = performance.now();
+  animId = requestAnimationFrame(tick);
+});
+document.getElementById('btnPause').addEventListener('click', () => { playing = false; if (animId) cancelAnimationFrame(animId); });
+document.getElementById('btnReset').addEventListener('click', () => {
+  playing = false; if (animId) cancelAnimationFrame(animId);
+  if (scenario) { step = 0; drawFrame(); }
+});
+
+document.getElementById('btnExportEmergencyAll').addEventListener('click', async () => {
+  if (!emergencySweepReady()) return;
+  for (const def of EMERGENCY_PLOT_EXPORTS) {
+    const el = document.getElementById(def.id);
+    if (el) await downloadEmergencyPlot(el, def.save);
+  }
+});
+
+document.getElementById('btnExportEmergencyCsv').addEventListener('click', () => {
+  if (!emergencySweepReady()) return;
+  downloadBlob('Emergency_G_Sweep_Summary.csv', emergencyTableCsv(), 'text/csv;charset=utf-8');
+});
+
+document.getElementById('btnExportEmergencyHtml').addEventListener('click', () => {
+  if (!emergencySweepReady()) return;
+  const base = emergencySweep.pacc[0].sim.meta;
+  const figs = EMERGENCY_PLOT_EXPORTS.map(def => {
+    const el = document.getElementById(def.id);
+    return el && el.data ? { id: def.id, title: def.save.replace(/_/g, ' '), data: el.data, layout: el.layout } : null;
+  }).filter(Boolean);
+  const payload = JSON.stringify({ cruiseSpd: base.cruiseSpd, deltaStar: base.deltaStar, figures: figs });
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>PACC Emergency G-Sweep</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"><\/script>
+<style>
+body{font-family:'Times New Roman',serif;margin:24px;background:#fff}
+h1,h2{font-family:'Segoe UI',sans-serif}
+table{border-collapse:collapse;width:100%;margin:16px 0 28px;font-family:'Segoe UI',sans-serif;font-size:14px}
+th,td{border:1px solid #ccc;padding:8px 10px;text-align:center}
+th{background:#f6f8fa}
+.plot{height:420px;margin-bottom:28px;border:1px solid #ccc}
+</style></head><body>
+<h1>PACC Emergency G-Sweep Report</h1>
+<p>Cruise speed: ${base.cruiseSpd.toFixed(2)} m/s · δ*: ${base.deltaStar.toFixed(3)} s · Severities: ${EMERGENCY_G_LEVELS.map(g => g + 'g').join(', ')}</p>
+<h2>Summary table</h2>
+${emergencyTableHtml()}
+<h2>Plots</h2>
+${figs.map(f => `<h3>${f.title}</h3><div class="plot" id="${f.id}"></div>`).join('')}
+<script>
+const payload = ${payload};
+payload.figures.forEach(f => Plotly.newPlot(f.id, f.data, f.layout, {responsive:true}));
+<\/script></body></html>`;
+  downloadBlob('Emergency_G_Sweep_Report.html', html, 'text/html;charset=utf-8');
+});
+
+document.getElementById('btnExportAll').addEventListener('click', async () => {
+  if (!scenario) return;
+  for (const def of PLOT_DEFS) {
+    const el = document.getElementById('plot-' + def.key);
+    if (el) await downloadJournalPlot(el, def.save);
+  }
+});
+
+document.getElementById('btnExportHtml').addEventListener('click', () => {
+  if (!scenario) return;
+  const figs = PLOT_DEFS.map(def => {
+    const el = document.getElementById('plot-' + def.key);
+    return el ? { key: def.key, y: def.y, data: el.data, layout: el.layout } : null;
+  }).filter(Boolean);
+  const payload = JSON.stringify({ label: scenario.meta.label, figures: figs });
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>PACC ${scenario.meta.label}</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"><\/script>
+<style>body{font-family:'Times New Roman',serif;margin:24px;background:#fff}.plot{height:480px;margin-bottom:28px;border:1px solid #ccc}</style></head><body>
+<h2>PACC Scenario: ${scenario.meta.label}</h2>
+${figs.map(f => `<div class="plot" id="p-${f.key}" style="height:${PLOT_STYLE.height}px"></div>`).join('')}
+<script>
+const payload = ${payload};
+payload.figures.forEach(f => Plotly.newPlot('p-'+f.key, f.data, f.layout, {responsive:true}));
+<\/script></body></html>`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  a.download = `${CTRL_LABELS[scenario.meta.controller] || 'Platoon'}_Journal_Plots.html`.replace(/[()]/g, '').replace(/\s+/g, '_');
+  a.click();
+});
+
+window.addEventListener('resize', () => {
+  resizeCanvases();
+  drawFrame();
+  PLOT_DEFS.forEach(def => {
+    const el = document.getElementById('plot-' + def.key);
+    if (el && el.data) Plotly.Plots.resize(el);
+  });
+  ['nColl', 'ttc', 'maxDv', 'impact-detail'].forEach(key => {
+    const el = document.getElementById('emer-' + key);
+    if (el && el.data) Plotly.Plots.resize(el);
+  });
+});
+resizeCanvases();
+</script>
+</body>
+</html>
