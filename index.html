@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" style="scroll-behavior: smooth; scroll-padding-top: 70px;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seshadri Naik Moode | PhD in Civil Engineering</title>
+  <meta name="description" content="PhD in Civil Engineering, UPC BarcelonaTech. Connected automated vehicles in mixed freeway traffic, and the network effects of urban road-space reallocation in Barcelona.">
+  <link rel="canonical" href="https://seshadrimoode.github.io/">
+  <meta property="og:title" content="Seshadri Naik Moode | PhD in Civil Engineering">
+  <meta property="og:description" content="CAV platooning in mixed traffic, and accessibility after Barcelona’s Eixos Verds. BIT–UPC. Defended 29 July 2026.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://seshadrimoode.github.io/">
+  <meta property="og:image" content="https://seshadrimoode.github.io/IMG_20240903_195451~2.jpg">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="IMG_20240903_195451~2.jpg" type="image/jpeg">
+
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* =========================================
+       🎨 THEME SETTINGS (Terra Cotta)
+       ========================================= */
+    :root {
+      --bg-color: #ffffff;           
+      --section-bg: #FFFBF7;         
+      --text-main: #27272A;          
+      --text-muted: #616161;         
+      --accent-color: #C2410C;       
+      --border-color: #F4ECE6;       
+      --card-shadow: 0 4px 6px rgba(194, 65, 12, 0.05); 
+      --font-family: 'Open Sans', sans-serif;
+    }
+
+    /* =========================================
+       📐 DESIGN RULES 
+       ========================================= */
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      color: var(--text-main);
+      background-color: var(--bg-color);
+      line-height: 1.6;
+    }
+    
+    .container { max-width: 1200px; margin: auto; padding: 0 20px; }
+    .section { padding: 80px 0; width: 100%; }
+    .bg-alt { background-color: var(--section-bg); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+    .text-center { text-align: center; }
+    
+    h1, h2, h3 { margin-top: 0; }
+    h1 { font-size: 42px; margin-bottom: 10px; }
+    h2 { font-size: 32px; margin-bottom: 30px; }
+    h3 { font-weight: 400; color: var(--text-muted); }
+    
+    /* Buttons & Links */
+    a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+    
+    .btn-group { margin-top: 30px; }
+    .btn {
+      display: inline-block; margin: 10px; padding: 12px 24px;
+      border-radius: 5px; font-weight: bold; text-decoration: none !important;
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .btn-outline { border: 2px solid var(--text-main); color: var(--text-main); }
+    .btn-primary { background-color: var(--accent-color); color: #ffffff; border: 2px solid var(--accent-color); }
+    
+    /* Cards */
+    .grid { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 30px; }
+    .card {
+      flex: 1; min-width: 250px; padding: 25px;
+      background: var(--bg-color); border: 1px solid var(--border-color);
+      border-radius: 12px; box-shadow: var(--card-shadow);
+      display: flex; flex-direction: column;
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.08); }
+    .card img { width: 100%; border-radius: 8px; margin-bottom: 15px; }
+    .mini-gallery { display: flex; gap: 10px; margin-bottom: 15px; }
+    .mini-gallery img { width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: 8px; }
+
+    /* =========================================
+       🧭 NAVIGATION & FOOTER (NEW!)
+       ========================================= */
+    .navbar {
+      position: sticky;
+      top: 0;
+      background-color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(5px);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 15px 0;
+      z-index: 1000;
+    }
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: auto;
+      padding: 0 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .nav-logo { font-size: 20px; font-weight: 700; color: var(--text-main); }
+    .nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-links a { margin-left: 18px; color: var(--text-muted); font-size: 15px; }
+    .nav-links a:hover { color: var(--accent-color); }
+
+    .pub-link { font-size: 14px; }
+    .footer p a { font-size: 16px; margin: 0 8px; }
+
+    @media (max-width: 720px) {
+      h1 { font-size: 32px; }
+      h2 { font-size: 26px; }
+      .nav-links a { margin-left: 12px; font-size: 14px; }
+      .section { padding: 56px 0; }
+    }
+
+    .footer {
+      background-color: #1A1A1A;
+      color: #A1A1AA;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .footer a { color: #ffffff; margin: 0 10px; font-size: 20px; }
+    .footer a:hover { color: var(--accent-color); }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">Seshadri Naik.</a>
+      <div class="nav-links">
+        <a href="#about">About</a>
+        <a href="#research">Research</a>
+        <a href="#publications">Publications</a>
+        <a href="#life">Life</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="section">
+    <div class="container" style="display: flex; align-items: center; justify-content: center; gap: 50px; flex-wrap: wrap;">
+      
+      <img src="IMG_20240903_195451~2.jpg" alt="Seshadri Naik" style="width: 240px; height: 240px; border-radius: 50%; object-fit: cover; box-shadow: var(--card-shadow);">
+      
+      <div style="max-width: 600px;">
+        <h1 style="margin-top: 0; margin-bottom: 5px;">Seshadri Naik Moode</h1>
+        <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--text-muted);">PhD in Civil Engineering, Universitat Politècnica de Catalunya</h3>
+        <p style="margin-bottom: 25px; font-size: 18px;">
+          I work on modelling, management, and safety of connected and automated vehicles in mixed traffic, and on the network effects of urban road-space reallocation. Based in Barcelona.
+        </p>
+        
+        <div style="margin-left: -10px;">
+          <a href="#publications" class="btn btn-outline">Publications</a>
+          <a href="CV_Seshadri_Naik_Moode.pdf" target="_blank" class="btn btn-primary">Download CV</a>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <div id="about" class="section bg-alt text-center">
+    <div class="container" style="max-width: 800px;">
+      <h2>About</h2>
+      <p style="font-size: 18px;">PhD in Civil Engineering, Universitat Politècnica de Catalunya – BarcelonaTech (BIT), defended 29 July 2026. Thesis: <i>Platooning of Connected Autonomous Vehicles on Freeways: Microscopic Modelling and Management Strategies</i>, supervised by Prof. Francesc Soriguera.</p>
+      <p style="font-size: 18px;">Research stay at KU Leuven Institute for Mobility with Prof. Claudio Roncoli (Sep 2025–Jan 2026). PTV Young Researcher Award, CIT 2023. JOAN ORÓ FI AGAUR doctoral grant. Open to postdoctoral research in traffic operations, mixed CAV–human traffic, and urban mobility.</p>
+      <p style="font-size: 16px; color: var(--text-muted); margin-bottom: 0;">CAVs · Traffic flow · Microscopic modelling · Transport operations · Simulation</p>
+    </div>
+  </div>
+
+  <div id="research" class="section">
+    <div class="container">
+      <h2 class="text-center">Featured Research</h2>
+      <div class="grid">
+        <div class="card">
+          <h3 style="color: var(--text-main); font-weight: 600;"><i class="fa-solid fa-play" style="color: var(--accent-color); margin-right: 8px;"></i>PACC platoon dynamics</h3>
+          <p>String stability, gaps, and emergency braking for PACC / CACC / RV platoons (thesis Ch. II).</p>
+          <p style="margin-top: auto;"><a href="#publications">Publications &rarr;</a></p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--text-main); font-weight: 600;"><i class="fa-solid fa-car-side" style="color: var(--accent-color); margin-right: 8px;"></i>CAV freeway operations</h3>
+          <p>Microscopic platoon modelling, mixed versus dedicated lanes, and energy. One journal article in <i>Transportmetrica B</i>; two manuscripts under review.</p>
+          <p style="margin-top: auto;"><a href="#publications">Publications &rarr;</a></p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--text-main); font-weight: 600;"><i class="fa-solid fa-map-location-dot" style="color: var(--accent-color); margin-right: 8px;"></i>Barcelona Eixos Verds</h3>
+          <p>Network VKT after the first permanent mid-grid cut, and residential accessibility to other residents. Both manuscripts in preparation.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="publications" class="section bg-alt">
+    <div class="container" style="max-width: 900px;">
+      
+      <div>
+        <h2 style="border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">Publications</h2>
+
+        <div style="margin-top: 20px;">
+          <span style="background-color: var(--section-bg); color: var(--accent-color); padding: 5px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; text-transform: uppercase; border: 1px solid var(--border-color);">
+            Journal articles
+          </span>
+          <ul style="padding-left: 20px; margin-top: 15px;">
+            <li style="font-size: 16px; margin-bottom: 12px;">Oriol, L., Martínez-Díaz, M., Moode, S. N., Sala, M., &amp; Soriguera, F. (2024). Platooning of connected automated vehicles on freeways: a microsimulation approach. <i>Transportmetrica B: Transport Dynamics</i>, 12(1), 2360543. <a class="pub-link" href="https://doi.org/10.1080/21680566.2024.2360543">doi</a></li>
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N., &amp; Soriguera, F. (2023). Microscopic modeling of connected autonomous vehicles platooning: stability and safety analysis. <i>Transportation Research Procedia</i>, 71, 260–267. <a class="pub-link" href="https://doi.org/10.1016/j.trpro.2023.11.083">doi</a></li>
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N., &amp; Soriguera, F. (2023). Platooning of connected autonomous vehicles in freeway traffic: state of the art. <i>Transportation Research Procedia</i>, 71, 268–275. <a class="pub-link" href="https://doi.org/10.1016/j.trpro.2023.11.084">doi</a></li>
+          </ul>
+        </div>
+
+        <div style="margin-top: 28px;">
+          <span style="background-color: var(--section-bg); color: var(--accent-color); padding: 5px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; text-transform: uppercase; border: 1px solid var(--border-color);">
+            Conference papers
+          </span>
+          <ul style="padding-left: 20px; margin-top: 15px;">
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N., Soriguera, F., Sala, M., &amp; Martínez-Díaz, M. (2025). Lane management strategies to enhance traffic performance in mixed traffic environments with platoons of connected autonomous vehicles. <i>TRISTAN XII</i> (12th Triennial Symposium on Transportation Analysis), Okinawa, Japan.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;">Zheng, X., Soriguera, F., Xie, C., &amp; Moode, S. N. (2025). An interaction-aware predictive control framework with adaptive gap regulation in connected and automated vehicle platoon. In <i>2025 IEEE Intelligent Vehicles Symposium (IV)</i> (pp. 1674–1680). IEEE. <a class="pub-link" href="https://doi.org/10.1109/IV64158.2025.11097812">doi</a></li>
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N., Soriguera, F., Zheng, X., &amp; Martínez-Díaz, M. (2024). Exploring safety in platoons of connected autonomous vehicles: investigating emergency braking conditions and collision severity. In <i>Proceedings of the 12th Symposium of the European Association for Research in Transportation (hEART)</i>.</li>
+          </ul>
+        </div>
+
+        <div style="margin-top: 28px;">
+          <span style="background-color: var(--section-bg); color: var(--accent-color); padding: 5px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; text-transform: uppercase; border: 1px solid var(--border-color);">
+            Under review
+          </span>
+          <ul style="padding-left: 20px; margin-top: 15px;">
+            <li style="font-size: 16px; margin-bottom: 12px;">Soriguera, F., Moode, S. N., &amp; Martínez-Díaz, M. (2026). A safe space-gap model for the platooning of connected autonomous vehicles in freeways: stability and safety analysis. Submitted to <i>IEEE Transactions on Intelligent Transportation Systems</i>.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N., Soriguera, F., &amp; Martínez-Díaz, M. (2026). Freeway lane management strategies in mixed traffic with platoons of connected and automated vehicles. Submitted to <i>Physica A: Statistical Mechanics and its Applications</i>.</li>
+          </ul>
+        </div>
+
+        <div style="margin-top: 28px;">
+          <span style="background-color: var(--section-bg); color: var(--accent-color); padding: 5px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; text-transform: uppercase; border: 1px solid var(--border-color);">
+            In preparation
+          </span>
+          <ul style="padding-left: 20px; margin-top: 15px;">
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N., Soriguera, F., &amp; Martínez-Díaz, M. Energy and emissions of freeway lane management strategies with platoons of connected autonomous vehicles.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N., Roncoli, C., &amp; Soriguera, F. Hierarchical optimal control for lane management of CAVs in non-cooperative mixed traffic.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N. From traffic evaporation to network adaptation: quantifying the mobility footprint of urban road-space reallocation. Intended for <i>Journal of Urban Mobility</i>.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;">Moode, S. N. The geography of residential access after a permanent mid-grid cut: Barcelona’s Eixos Verds. Intended for <i>Journal of Transport Geography</i>.</li>
+          </ul>
+        </div>
+
+        <div id="conferences" style="margin-top: 40px;">
+          <h2 style="border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">Conferences</h2>
+          <ul style="padding-left: 20px; margin-top: 15px;">
+            <li style="font-size: 16px; margin-bottom: 12px;"><b>TRISTAN XII</b>, Okinawa, Japan, June 2025. Oral: lane-management strategies to enhance traffic performance in mixed traffic with CAV platoons.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;"><b>CIT 2025</b>, Zaragoza, Spain, June 2025. Oral: lane-management strategies for CAV platoons — mixed and dedicated lanes.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;"><b>104th TRB Annual Meeting</b>, Washington, D.C., January 2025. Poster: impact of lane-management strategies of CAV platoons on traffic flow.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;"><b>MFTS 2024</b>, Heraklion, Greece, September 2024. Oral: emergency braking, collision risk and severity in CAV platoons.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;"><b>TRC-30</b>, Heraklion, Greece, September 2024. Poster: strategies to optimize CAV platooning on freeways.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;"><b>hEART 2024</b>, Espoo, Finland, June 2024. Oral: emergency braking and collision severity in CAV platoons.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;"><b>EWGT 2023</b>, Santander, Spain, September 2023. Oral: string-stable car-following model for CAV platoons.</li>
+            <li style="font-size: 16px; margin-bottom: 12px;"><b>CIT 2023</b>, Tenerife, Spain, June 2023. Oral: microscopic modelling of CAV platooning (stability and safety). PTV Young Researcher Award.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="life" class="section">
+    <div class="container">
+      <h2 class="text-center">Life in Motion</h2>
+      <div class="grid">
+
+        <div class="card">
+          <h3 style="color: var(--text-main); font-weight: 600;"><i class="fa-solid fa-person-running" style="color: var(--accent-color); margin-right: 8px;"></i>Running</h3>
+          <div class="mini-gallery">
+            <div style="flex: 1;">
+              <img src="IMG_20260215_122336_Bokeh.jpg" alt="Half Marathon in Barcelona">
+              <p style="font-size: 13px; font-weight: bold; text-align: center; margin: 0; color: var(--accent-color);">Half: 1h 40m</p>
+            </div>
+            <div style="flex: 1;">
+              <img src="VID_20260315_130453_exported_31983.jpg" alt="Full Marathon at Arc de Triomf">
+              <p style="font-size: 13px; font-weight: bold; text-align: center; margin: 0; color: var(--accent-color);">Full: 3h 52m</p>
+            </div>
+          </div>
+          <p>Long runs bring clarity—ideas simplify and structure emerges.</p>
+          <a href="running.html">Read my running journal &rarr;</a>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--text-main); font-weight: 600;"><i class="fa-solid fa-mountain" style="color: var(--accent-color); margin-right: 8px;"></i>Hiking</h3>
+          <img src="IMG_20250719_161023.jpg" alt="Seshadri Naik at Monte Perdido summit (3355m)" style="margin-bottom: 15px;">
+          <p>Exploring trails, seeking elevation, and finding perspective in nature. Monte Perdido, 3,355 m.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer id="contact" class="footer">
+    <div class="container">
+      <h2 style="color: #ffffff;">Get in Touch</h2>
+      <p style="margin-bottom: 16px;"><a href="mailto:seshadri.naik.moode@upc.edu" style="color:#ffffff; font-size:16px;">seshadri.naik.moode@upc.edu</a></p>
+      <div style="margin-bottom: 30px;">
+        <a href="https://scholar.google.com/citations?hl=en&user=p2ouKjIAAAAJ" target="_blank" aria-label="Google Scholar"><i class="fa-solid fa-graduation-cap"></i></a>
+        <a href="https://orcid.org/0000-0002-9651-7535" target="_blank" aria-label="ORCID"><i class="fa-brands fa-orcid"></i></a>
+        <a href="https://github.com/SeshadriMoode" target="_blank" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+        <a href="mailto:seshadri.naik.moode@upc.edu" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+        <a href="https://www.linkedin.com/in/seshadri-naik-5002a2119" target="_blank" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+      </div>
+      
+      <p style="font-size: 14px; margin: 0;">&copy; 2026 Seshadri Naik. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Seshadri Naik Moode",
+    "jobTitle": "PhD in Civil Engineering",
+    "affiliation": {
+      "@type": "Organization",
+      "name": "Universitat Politècnica de Catalunya – BarcelonaTech"
+    },
+    "url": "https://seshadrimoode.github.io/",
+    "email": "seshadri.naik.moode@upc.edu",
+    "sameAs": [
+      "https://orcid.org/0000-0002-9651-7535",
+      "https://www.linkedin.com/in/seshadri-naik-5002a2119",
+      "https://scholar.google.com/citations?hl=en&user=p2ouKjIAAAAJ",
+      "https://github.com/SeshadriMoode"
+    ]
+  }
+  </script>
+
+</body>
+</html>
